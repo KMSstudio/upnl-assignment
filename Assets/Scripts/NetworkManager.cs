@@ -4,9 +4,12 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Collections.Concurrent;
 
-public class NetworkManager : MonoBehaviour
-{
+/// <summary>
+/// Handles TCP-based networking: server/client setup, message transmission, and reception queue
+/// </summary>
+public class NetworkManager : MonoBehaviour {
     public static NetworkManager Instance;
 
     private TcpListener server;
@@ -14,7 +17,9 @@ public class NetworkManager : MonoBehaviour
     private NetworkStream stream;
     private Thread receiveThread;
 
-    private void Awake() {
+    private static readonly ConcurrentQueue<string> incomingMessages = new ConcurrentQueue<string>();
+
+    void Awake() {
         if (Instance == null) { Instance = this; DontDestroyOnLoad(gameObject); }
         else { Destroy(gameObject); }
     }
@@ -58,10 +63,12 @@ public class NetworkManager : MonoBehaviour
 
                 string message = Encoding.UTF8.GetString(buffer, 0, length);
                 Debug.Log("Receive: " + message);
-
-                ChatManager.ReceiveMessage(message);
+                incomingMessages.Enqueue(message);
             }
-            catch (Exception e) { Debug.LogError("Receive Error: " + e.Message); break; }
+            catch (Exception e) {
+                Debug.LogError("Receive Error: " + e.Message);
+                break;
+            }
         }
     }
 
@@ -71,5 +78,14 @@ public class NetworkManager : MonoBehaviour
             stream.Write(buffer, 0, buffer.Length);
             Debug.Log("Send   : " + msg);
         }
+    }
+
+    public bool HasMessage() {
+        return !incomingMessages.IsEmpty;
+    }
+
+    public string GetNextMessage() {
+        if (incomingMessages.TryDequeue(out string msg)) return msg;
+        return null;
     }
 }

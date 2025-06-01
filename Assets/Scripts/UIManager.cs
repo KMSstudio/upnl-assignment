@@ -18,7 +18,7 @@ public class UIManager : MonoBehaviour
     public void OnClickStartServer()
     {
         NetworkManager.Instance.StartServer(7777);  // 포트는 7777로 고정
-        SceneManager.LoadScene("HostGameScene");
+        SceneManager.LoadScene("ChatScene");
     }
 
     // 버튼: 서버에 연결
