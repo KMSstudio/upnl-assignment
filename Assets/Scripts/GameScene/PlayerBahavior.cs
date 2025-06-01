@@ -72,6 +72,33 @@ public class PlayerBehavior : MonoBehaviour {
 
         move.ApplyInput(input);
     }
+    
+    protected void ApplyLocation(PlayerLocation loc) {
+        transform.position = loc.position;
+        
+        if (!move.aim && loc.aim) enableAimMotion();
+        if (move.aim && !loc.aim) disableAimMotion();
+        if (!move.fire && loc.fire) enableFireMotion();
+        if (move.fire && !loc.fire) disableFireMotion();
+
+        if (!isCrouch) {
+            if (loc.stance.jump && !move.stance.jump && !isJumping && !move.stance.crouch) Jump();
+        }
+
+        if (!isJumping) {
+            if (loc.stance.crouch && !move.stance.crouch) {
+                if (crouchCoroutine != null) StopCoroutine(crouchCoroutine);
+                isCrouch = true;
+                crouchCoroutine = StartCoroutine(DoCrouch(true));
+            } else if (!loc.stance.crouch && move.stance.crouch) {
+                if (crouchCoroutine != null) StopCoroutine(crouchCoroutine);
+                isCrouch = false;
+                crouchCoroutine = StartCoroutine(DoCrouch(false));
+            }
+        }
+        
+        move.ApplyLocation(loc);
+    }
 
     void Jump() {
         isJumping = true;

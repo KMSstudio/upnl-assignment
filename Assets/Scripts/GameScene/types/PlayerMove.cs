@@ -35,6 +35,14 @@ public class PlayerMove {
         aim = input.aim;
         fire = input.fire;
     }
+    
+    public void ApplyLocation(PlayerLocation loc) {
+        velocity = Vector3.zero;
+        motion = loc.motion;
+        stance = loc.stance;
+        aim = loc.aim;
+        fire = loc.fire;
+    }
 
     public void ApplyGravity(float deltaTime) {
         Vector3 v = velocity;
