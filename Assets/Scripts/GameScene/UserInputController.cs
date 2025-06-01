@@ -7,7 +7,7 @@ using UnityEngine;
 /// Author: Serius <tomskang@naver.com>
 /// Last Modified: 2025-05-28
 /// </summary>
-public class InputController : MonoBehaviour, IInputProvider
+public class UserInputController : MonoBehaviour, IInputProvider
 {
     private Queue<PlayerInput> inputQueue = new Queue<PlayerInput>();
     private float repeatInterval = 0.02f;

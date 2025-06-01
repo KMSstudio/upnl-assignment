@@ -26,7 +26,7 @@ public class ChatManager : MonoBehaviour {
         NetworkManager.Instance.SendChatMessage(msg);
         chatLogText.text += "\nServer: " + msg;
         inputField.text = "";
-        Canvas.ForceUpdateCanvases();
+        Canvas.ForceUpdateCanvases();   
         scrollRect.verticalNormalizedPosition = 0;
     }
 }

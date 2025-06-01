@@ -1,77 +1,55 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Controls player behavior based on structured input.
-/// Applies state changes, motion updates, and handles jump/crouch logic.
-/// 
-/// Author: Serius <tomskang@naver.com>
-/// Last Modified: 2025-05-28
+/// Handles base movement, jump, crouch, and motion state of a player
 /// </summary>
 public class PlayerBehavior : MonoBehaviour {
     public float moveSpeed = 5f;
     public float jumpForce = 5f;
-    public MonoBehaviour inputSource;
 
-    private Queue<PlayerInput> inputQueue;
-    private PlayerMove move = new PlayerMove();
-    private Rigidbody rb;
-    
-    private bool isJumping = false;
-    private bool isCrouch = false;
-    private Coroutine crouchCoroutine;
+    protected PlayerMove move = new PlayerMove();
+    protected Rigidbody rb;
 
-    void Start() {
-        if (inputSource is IInputProvider provider) { inputQueue = provider.GetInputQueue(); }
-        else { Debug.LogError("Input source must implement IInputProvider."); }
+    protected bool isJumping = false;
+    protected bool isCrouch = false;
+    protected Coroutine crouchCoroutine;
+
+    protected virtual void Start() {
         rb = GetComponent<Rigidbody>();
     }
 
-    void Update() {
-        if (inputQueue == null) return;
-
-        while (inputQueue.Count > 0) {
-            var input = inputQueue.Dequeue();
-            ApplyInput(input);
-        }
-    }
+    protected virtual void Update() { }
 
     void FixedUpdate() {
-        if (isJumping) { move.ApplyGravity(Time.fixedDeltaTime); }
+        if (isJumping) move.ApplyGravity(Time.fixedDeltaTime);
         rb.MovePosition(rb.position + move.velocity * (moveSpeed * Time.fixedDeltaTime));
     }
 
     public string ToText() {
         Vector3 pos = transform.position;
-
         string motionStr = move.motion switch {
             -1 => "LeanLeft",
-            1  => "LeanRight",
-            _  => "Neutral"
+            1 => "LeanRight",
+            _ => "Neutral"
         };
-
         string stanceStr = "";
         if (move.stance.crouch) stanceStr += "Crouch ";
-        if (move.stance.jump)   stanceStr += "Jump ";
-
+        if (move.stance.jump) stanceStr += "Jump ";
         string aimStr = move.aim ? "Aiming " : "";
         string fireStr = move.fire ? "Firing" : "";
-
         string stateStr = $"{motionStr} {stanceStr}{aimStr}{fireStr}".Trim();
-
         return $"POS({pos.x:F2},{pos.y:F2},{pos.z:F2}) STATE({stateStr})";
     }
 
-    void ApplyInput(PlayerInput input) {
+    protected void ApplyInput(PlayerInput input) {
         if (!move.aim && input.aim) enableAimMotion();
         if (move.aim && !input.aim) disableAimMotion();
-
         if (!move.fire && input.fire) enableFireMotion();
         if (move.fire && !input.fire) disableFireMotion();
 
         if (!isCrouch) {
-            if (input.stance.jump && !move.stance.jump && !isJumping && !move.stance.crouch) { Jump(); }
+            if (input.stance.jump && !move.stance.jump && !isJumping && !move.stance.crouch) Jump();
         }
 
         if (!isJumping) {
@@ -105,7 +83,6 @@ public class PlayerBehavior : MonoBehaviour {
         float time = 0f;
         float from = transform.localScale.y;
         float to = crouch ? 0.6f : 1.0f;
-
         Vector3 scale = transform.localScale;
 
         while (time < duration) {
