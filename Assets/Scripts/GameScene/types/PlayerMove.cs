@@ -8,10 +8,10 @@ using UnityEngine;
 /// </summary>
 public class PlayerMove {
     public Vector3 velocity { get; private set; }
-    public int motion { get; private set; }
-    public (bool crouch, bool jump) stance { get; private set; }
-    public bool aim { get; private set; }
-    public bool fire { get; private set; }
+    public int motion { get; private set; }         // 좌우 기울임
+    public (bool crouch, bool jump) stance { get; private set; }    // 점프 및 앉기
+    public bool aim { get; private set; }   // 타겟팅
+    public bool fire { get; private set; }  // 발파
 
     private float gravity = -9.8f;
     private float terminalVelocity = -20f;

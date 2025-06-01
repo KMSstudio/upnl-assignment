@@ -42,6 +42,27 @@ public class PlayerBehavior : MonoBehaviour {
         rb.MovePosition(rb.position + move.velocity * (moveSpeed * Time.fixedDeltaTime));
     }
 
+    public string ToText() {
+        Vector3 pos = transform.position;
+
+        string motionStr = move.motion switch {
+            -1 => "LeanLeft",
+            1  => "LeanRight",
+            _  => "Neutral"
+        };
+
+        string stanceStr = "";
+        if (move.stance.crouch) stanceStr += "Crouch ";
+        if (move.stance.jump)   stanceStr += "Jump ";
+
+        string aimStr = move.aim ? "Aiming " : "";
+        string fireStr = move.fire ? "Firing" : "";
+
+        string stateStr = $"{motionStr} {stanceStr}{aimStr}{fireStr}".Trim();
+
+        return $"POS({pos.x:F2},{pos.y:F2},{pos.z:F2}) STATE({stateStr})";
+    }
+
     void ApplyInput(PlayerInput input) {
         if (!move.aim && input.aim) enableAimMotion();
         if (move.aim && !input.aim) disableAimMotion();
