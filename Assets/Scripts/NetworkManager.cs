@@ -1,0 +1,75 @@
+using UnityEngine;
+using System;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+
+public class NetworkManager : MonoBehaviour
+{
+    public static NetworkManager Instance;
+
+    private TcpListener server;
+    private TcpClient client;
+    private NetworkStream stream;
+    private Thread receiveThread;
+
+    private void Awake() {
+        if (Instance == null) { Instance = this; DontDestroyOnLoad(gameObject); }
+        else { Destroy(gameObject); }
+    }
+
+    public void StartServer(int port) {
+        server = new TcpListener(IPAddress.Any, port);
+        server.Start();
+        server.BeginAcceptTcpClient(OnClientConnected, null);
+        Debug.Log("Server Standby...");
+    }
+
+    public void ConnectToServer(string ip, int port) {
+        client = new TcpClient();
+        client.Connect(ip, port);
+        stream = client.GetStream();
+        StartReceive();
+        Debug.Log("Server Connected...");
+    }
+
+    private void OnClientConnected(IAsyncResult ar) {
+        client = server.EndAcceptTcpClient(ar);
+        stream = client.GetStream();
+        StartReceive();
+        Debug.Log("Client Connected...");
+    }
+
+    private void StartReceive() {
+        receiveThread = new Thread(ReceiveLoop);
+        receiveThread.IsBackground = true;
+        receiveThread.Start();
+    }
+
+    private void ReceiveLoop() {
+        while (true) {
+            try {
+                if (stream == null || !stream.CanRead) continue;
+
+                byte[] buffer = new byte[1024];
+                int length = stream.Read(buffer, 0, buffer.Length);
+                if (length == 0) continue;
+
+                string message = Encoding.UTF8.GetString(buffer, 0, length);
+                Debug.Log("Receive: " + message);
+
+                ChatManager.ReceiveMessage(message);
+            }
+            catch (Exception e) { Debug.LogError("Receive Error: " + e.Message); break; }
+        }
+    }
+
+    public void SendChatMessage(string msg) {
+        if (stream != null && stream.CanWrite) {
+            byte[] buffer = Encoding.UTF8.GetBytes(msg);
+            stream.Write(buffer, 0, buffer.Length);
+            Debug.Log("Send   : " + msg);
+        }
+    }
+}
