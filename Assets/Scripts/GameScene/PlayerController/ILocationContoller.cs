@@ -8,5 +8,5 @@ using System.Collections.Generic;
 /// </summary>
 
 public interface ILocationController {
-    Queue<PlayerLocation> GetLocationQueue();
+    PlayerLocation GetLatestLocation();
 }

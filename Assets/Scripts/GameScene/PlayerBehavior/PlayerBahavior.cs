@@ -22,7 +22,7 @@ public class PlayerBehavior : MonoBehaviour {
 
     protected virtual void Update() { }
 
-    void FixedUpdate() {
+    protected virtual void FixedUpdate() {
         if (isJumping) move.ApplyGravity(Time.fixedDeltaTime);
         rb.MovePosition(rb.position + move.velocity * (moveSpeed * Time.fixedDeltaTime));
     }

@@ -1,23 +1,22 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Handles external string-based PlayerLocation updates and queues them
+/// Handles external string-based PlayerLocation updates and stores the latest one
 /// </summary>
 public class NetworkLocationController : MonoBehaviour, ILocationController {
-    private Queue<PlayerLocation> locationQueue = new Queue<PlayerLocation>();
+    private PlayerLocation latestLocation;
 
-    public Queue<PlayerLocation> GetLocationQueue() { return locationQueue; }
+    public PlayerLocation GetLatestLocation() => latestLocation;
 
     public void Receive(string line) {
-        var loc = PlayerLocation.FromString(line);
-        locationQueue.Enqueue(loc);
+        latestLocation = PlayerLocation.FromString(line);
     }
 
     void Update() {
-        while (NetworkManager.Instance && NetworkManager.Instance.HasMessage()) {
-            string msg = NetworkManager.Instance.GetNextMessage();
-            Receive(msg);
-        }
+        // if (!NetworkManager.Instance) return;
+        // string lastMsg = null;
+        // while (NetworkManager.Instance.HasMessage()) {
+        //     lastMsg = NetworkManager.Instance.GetNextMessage(); }
+        // if (!string.IsNullOrEmpty(lastMsg)) { Receive(lastMsg); }
     }
 }

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -8,18 +7,23 @@ using UnityEngine;
 public class PlayerLocationBehavior : PlayerBehavior {
     public MonoBehaviour locationSource;
 
-    private Queue<PlayerLocation> locationQueue;
+    private ILocationController controller;
 
     protected override void Start() {
         base.Start();
-        if (locationSource is ILocationController controller) locationQueue = controller.GetLocationQueue();
+        if (locationSource is ILocationController c) controller = c;
         else Debug.LogError("Location source must implement ILocationController.");
     }
 
-    protected override void Update() {
-        if (locationQueue == null) return;
-        while (locationQueue.Count > 0) {
-            var loc = locationQueue.Dequeue();
+    protected override void FixedUpdate() {
+        base.FixedUpdate();
+
+        if (!NetworkManager.Instance) return;
+
+        string msg = NetworkManager.Instance.PeekLatestMessage();
+        if (!string.IsNullOrEmpty(msg)) {
+            Debug.Log("[PlayerLocationBehavior] Applying location: " + msg);
+            var loc = PlayerLocation.FromString(msg);
             ApplyLocation(loc);
         }
     }
