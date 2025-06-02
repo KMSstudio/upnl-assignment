@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 
 /// <summary>
+/// PlayerBehavior.cs
 /// Handles base movement, jump, crouch, and motion state of a player
 /// </summary>
 public class PlayerBehavior : MonoBehaviour {
@@ -75,6 +76,7 @@ public class PlayerBehavior : MonoBehaviour {
     
     protected void ApplyLocation(PlayerLocation loc) {
         transform.position = loc.position;
+        Debug.Log(loc.position);
         
         if (!move.aim && loc.aim) enableAimMotion();
         if (move.aim && !loc.aim) disableAimMotion();

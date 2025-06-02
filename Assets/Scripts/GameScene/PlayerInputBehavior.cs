@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
+/// PlayerInputBehavior.cs
 /// Controls a player via external input source
 /// </summary>
 public class PlayerInputBehavior : PlayerBehavior {

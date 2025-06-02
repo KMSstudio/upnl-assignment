@@ -13,4 +13,11 @@ public class NetworkLocationController : MonoBehaviour, ILocationController {
         var loc = PlayerLocation.FromString(line);
         locationQueue.Enqueue(loc);
     }
+
+    void Update() {
+        while (NetworkManager.Instance && NetworkManager.Instance.HasMessage()) {
+            string msg = NetworkManager.Instance.GetNextMessage();
+            Receive(msg);
+        }
+    }
 }
