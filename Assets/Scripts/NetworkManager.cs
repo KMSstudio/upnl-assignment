@@ -23,10 +23,6 @@ public class NetworkManager : MonoBehaviour {
         if (Instance == null) { Instance = this; DontDestroyOnLoad(gameObject); }
         else { Destroy(gameObject); }
     }
-    
-    void Update() {
-        UpdateLatestMessage();
-    }
 
     public void StartServer(int port) {
         server = new TcpListener(IPAddress.Any, port);
@@ -91,23 +87,4 @@ public class NetworkManager : MonoBehaviour {
         if (incomingMessages.TryDequeue(out string msg)) return msg;
         return null;
     }
-
-    /// ✅ NEW: Safely get the latest message only
-    public string GetLatestMessage() {
-        string latest = null;
-        while (incomingMessages.TryDequeue(out var msg)) {
-            latest = msg;
-        }
-        return latest;
-    }
-    
-    private static string cachedMessage = null; // 💡 캐시용 변수 추가
-
-    public void UpdateLatestMessage() {
-        while (incomingMessages.TryDequeue(out var msg)) {
-            cachedMessage = msg;
-        }
-    }
-
-    public string PeekLatestMessage() => cachedMessage;
 }

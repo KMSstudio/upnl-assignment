@@ -43,7 +43,7 @@ public class PlayerBehavior : MonoBehaviour {
         return $"POS({pos.x:F2},{pos.y:F2},{pos.z:F2}) STATE({stateStr})";
     }
 
-    protected void ApplyInput(PlayerInput input) {
+    public void ApplyInput(PlayerInput input) {
         if (!move.aim && input.aim) enableAimMotion();
         if (move.aim && !input.aim) disableAimMotion();
         if (!move.fire && input.fire) enableFireMotion();
@@ -74,9 +74,8 @@ public class PlayerBehavior : MonoBehaviour {
         move.ApplyInput(input);
     }
     
-    protected void ApplyLocation(PlayerLocation loc) {
+    public void ApplyLocation(PlayerLocation loc) {
         transform.position = loc.position;
-        Debug.Log(loc.position);
         
         if (!move.aim && loc.aim) enableAimMotion();
         if (move.aim && !loc.aim) disableAimMotion();

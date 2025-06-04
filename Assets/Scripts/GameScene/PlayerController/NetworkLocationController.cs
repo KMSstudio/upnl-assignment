@@ -13,10 +13,10 @@ public class NetworkLocationController : MonoBehaviour, ILocationController {
     }
 
     void Update() {
-        // if (!NetworkManager.Instance) return;
-        // string lastMsg = null;
-        // while (NetworkManager.Instance.HasMessage()) {
-        //     lastMsg = NetworkManager.Instance.GetNextMessage(); }
-        // if (!string.IsNullOrEmpty(lastMsg)) { Receive(lastMsg); }
+        if (!NetworkManager.Instance) return;
+        string lastMsg = null;
+        while (NetworkManager.Instance.HasMessage()) {
+            lastMsg = NetworkManager.Instance.GetNextMessage(); }
+        if (!string.IsNullOrEmpty(lastMsg)) { Receive(lastMsg); }
     }
 }
