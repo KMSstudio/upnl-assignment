@@ -18,8 +18,7 @@ public class ClientParse : MonoBehaviour {
     }
 
     void Update() {
-        if (NetworkManager.Instance == null) return;
-
+        if (ReferenceEquals(NetworkManager.Instance, null)) return;
         while (NetworkManager.Instance.HasMessage()) {
             string msg = NetworkManager.Instance.GetNextMessage();
             Debug.Log($"[ClientParse] Received: {msg}");
@@ -36,7 +35,7 @@ public class ClientParse : MonoBehaviour {
         if (!msg.StartsWith("GAME")) return;
         string payload = msg.Substring(5);
         // EXECUTE
-        var matches = Regex.Matches(payload, @"(\d+)\{(.*?)\}");
+        var matches = Regex.Matches(payload, @"(\d+)\s*\{\s*(.*?)\s*\}");
         foreach (Match match in matches) {
             int playerNo = int.Parse(match.Groups[1].Value);
             string locationText = match.Groups[2].Value;

@@ -23,7 +23,7 @@ public class ChatManager : MonoBehaviour {
         string msg = inputField.text.Trim();
         if (string.IsNullOrEmpty(msg)) return;
 
-        NetworkManager.Instance.SendChatMessage(msg);
+        NetworkManager.Instance.SendMessage(msg);
         chatLogText.text += "\nServer: " + msg;
         inputField.text = "";
         Canvas.ForceUpdateCanvases();   
