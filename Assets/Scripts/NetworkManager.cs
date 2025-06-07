@@ -25,6 +25,7 @@ public class NetworkManager : MonoBehaviour {
 
     // PUBLIC STATE
     public int PlayerNumber { get; private set; } = -1;
+    public string PlayerIdentifier { get; private set; } = "";
     public int TotalPlayers => playerCount;
 
     // PRIVATE STATE
@@ -64,6 +65,7 @@ public class NetworkManager : MonoBehaviour {
         Debug.Log($"[NetworkManager] New client connected. Assigned: playerno={assignedPlayerNo}, playerid={playerId}");
         SendRaw(newStream, $"NTWK {{playerno={assignedPlayerNo}}}");
         SendRaw(newStream, $"NTWK {{playerid={playerId}}}");
+        SendMessageServer($"NTWK {{playercnt={playerCount}}}", null);
         // START RECEIVING
         Thread thread = new Thread(() => ReceiveLoop(newClient));
         thread.IsBackground = true;
@@ -103,7 +105,12 @@ public class NetworkManager : MonoBehaviour {
                             Debug.Log($"[NetworkManager] Assigned PlayerNumber = {PlayerNumber}");
                         }
                         else if (key == "playerid") {
-                            Debug.Log($"[NetworkManager] Received PlayerID = {val}");
+                            PlayerIdentifier = val;
+                            Debug.Log($"[NetworkManager] Assigned PlayerIdentifier = {PlayerIdentifier}");
+                        }
+                        else if (key == "playercnt" && int.TryParse(val, out int cnt)) {
+                            playerCount = cnt;
+                            Debug.Log($"[NetworkManager] Updated TotalPlayers = {playerCount}");
                         }
                     }
                 } 
