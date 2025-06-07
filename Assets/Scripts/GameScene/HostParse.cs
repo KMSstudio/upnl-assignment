@@ -34,7 +34,7 @@ public class HostParse : MonoBehaviour {
         if (!ReferenceEquals(NetworkManager.Instance, null)) {
             StringBuilder sb = new StringBuilder("GAME ");
             for (int i = 0; i < players.Count; i++) { sb.Append($"{i}{{{players[i].ToText()}}} "); }
-            NetworkManager.Instance.SendMessage(sb.ToString().Trim());
+            NetworkManager.Instance.SendChatMessage(sb.ToString().Trim());
         }
     }
 }

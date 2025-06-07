@@ -119,7 +119,7 @@ public class NetworkManager : MonoBehaviour {
             stream.Write(buffer, 0, buffer.Length);
     }
 
-    public void SendMessage(string msg) {
+    public void SendChatMessage(string msg) {
         if (isServer) { SendMessageServer(msg, null);}
         else { SendMessageClient(msg); }
     }
