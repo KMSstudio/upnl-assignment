@@ -11,7 +11,7 @@ public class UIManager : MonoBehaviour
 
     void Start()
     {
-        myIpText.text = "내 IP: " + GetMyLocalIP();
+        myIpText.text = "YOUR IP: " + GetMyLocalIP();
     }
 
     // 버튼: 서버 시작
