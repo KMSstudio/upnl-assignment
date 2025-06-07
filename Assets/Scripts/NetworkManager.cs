@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 
 /// <summary>
@@ -57,27 +58,38 @@ public class NetworkManager : MonoBehaviour {
         TcpClient newClient = server.EndAcceptTcpClient(ar);
         connectedClients.Add(newClient);
         NetworkStream newStream = newClient.GetStream();
-        // SEND PLAYER NO
+        // SEND PLAYER#
         int assignedPlayerNo = playerCount++;
-        Debug.Log($"[NetworkManager] New client connected. Assigned: playerno={assignedPlayerNo}");
-        string message = $"NTWK (playerno={assignedPlayerNo})";
-        byte[] buffer = Encoding.UTF8.GetBytes(message);
-        newStream.Write(buffer, 0, buffer.Length);
+        string playerId = HashPlayerId(assignedPlayerNo);
+        Debug.Log($"[NetworkManager] New client connected. Assigned: playerno={assignedPlayerNo}, playerid={playerId}");
+        SendRaw(newStream, $"NTWK {{playerno={assignedPlayerNo}}}");
+        SendRaw(newStream, $"NTWK {{playerid={playerId}}}");
         // START RECEIVING
         Thread thread = new Thread(() => ReceiveLoop(newClient));
         thread.IsBackground = true;
         thread.Start();
         server.BeginAcceptTcpClient(OnClientConnected, null);
     }
+    
+    private string HashPlayerId(int playerNo) {
+        string salt = "I hate typescript";
+        byte[] inputBytes = Encoding.UTF8.GetBytes($"{playerNo}:{salt}");
+        using (SHA256 sha = SHA256.Create()) {
+            byte[] hash = sha.ComputeHash(inputBytes);
+            StringBuilder sb = new StringBuilder();
+            foreach (var b in hash) sb.Append(b.ToString("x2"));
+            return sb.ToString();
+        }
+    }
 
     private void ReceiveLoop(TcpClient targetClient) {
         NetworkStream s = targetClient.GetStream();
+        byte[] buffer = new byte[1024];
         while (true) {
             try {
-                if (s == null || !s.CanRead) { continue;}
-                byte[] buffer = new byte[1024];
+                if (s == null || !s.CanRead) continue;
                 int length = s.Read(buffer, 0, buffer.Length);
-                if (length == 0) { continue;}
+                if (length == 0) continue;
                 string msg = Encoding.UTF8.GetString(buffer, 0, length);
                 Debug.Log($"[NetworkManager] Received: {msg}");
                 // MSG HDL
@@ -86,15 +98,25 @@ public class NetworkManager : MonoBehaviour {
                     if (match.Success) {
                         string key = match.Groups[1].Value;
                         string val = match.Groups[2].Value;
-                        if (key == "playerno" && int.TryParse(val, out int no)) { PlayerNumber = no; Debug.Log($"[NetworkManager] Assigned PlayerNumber = {PlayerNumber}"); }
+                        if (key == "playerno" && int.TryParse(val, out int no)) {
+                            PlayerNumber = no;
+                            Debug.Log($"[NetworkManager] Assigned PlayerNumber = {PlayerNumber}");
+                        }
+                        else if (key == "playerid") {
+                            Debug.Log($"[NetworkManager] Received PlayerID = {val}");
+                        }
                     }
-                }
+                } 
                 else { incomingMessages.Enqueue(msg); }
-            } catch (Exception e) {
-                Debug.LogError("[NetworkManager] Receive Error: " + e.Message);
-                break;
             }
+            catch (Exception e) { Debug.LogError("[NetworkManager] Receive Error: " + e.Message); break; }
         }
+    }
+    
+    private void SendRaw(NetworkStream stream, string msg) {
+        byte[] buffer = Encoding.UTF8.GetBytes(msg);
+        if (stream != null && stream.CanWrite)
+            stream.Write(buffer, 0, buffer.Length);
     }
 
     public void SendMessage(string msg) {
