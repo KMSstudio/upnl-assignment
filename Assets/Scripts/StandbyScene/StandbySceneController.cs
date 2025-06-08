@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
 
 public class StandbySceneController : MonoBehaviour
@@ -18,9 +19,9 @@ public class StandbySceneController : MonoBehaviour
         while (NetworkManager.Instance.HasMessage()) {
             string msg = NetworkManager.Instance.GetNextMessage();
             if (msg == "STAT {start}") {
-                if (!NetworkManager.Instance.IsServer()) {
-                    SceneManager.LoadScene("ClientGameScene");
-                }
+                CancelInvoke(nameof(UpdatePlayerCount));
+                if (!NetworkManager.Instance.IsServer()) { SceneManager.LoadScene("ClientGameScene"); }
+                else { SceneManager.LoadScene("HostGameScene"); }
             }
         }
     }
@@ -31,6 +32,7 @@ public class StandbySceneController : MonoBehaviour
     }
 
     void OnClickStart() {
+        CancelInvoke(nameof(UpdatePlayerCount));
         NetworkManager.Instance.SendChatMessage("STAT {start}");
         SceneManager.LoadScene("HostGameScene");
     }

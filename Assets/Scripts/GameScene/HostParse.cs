@@ -34,7 +34,7 @@ public class HostParse : MonoBehaviour {
         if (players.Count > 0 && inputQueue != null) {
             while (inputQueue.Count > 0) { players[0].ApplyInput(inputQueue.Dequeue()); }
         }
-        // PARSE MTWK MSG
+        // PARSE NTWK MSG
         while (NetworkManager.Instance.HasMessage()) {
             string msg = NetworkManager.Instance.GetNextMessage();
             if (msg.StartsWith("USER")) {
