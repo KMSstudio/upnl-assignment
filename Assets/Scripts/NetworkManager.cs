@@ -1,19 +1,17 @@
-using UnityEngine;
 using System;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Sockets;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
+using UnityEngine;
 
-/// <summary>
-/// Handles TCP-based networking: server/client setup, message transmission, and reception queue
-/// </summary>
 public class NetworkManager : MonoBehaviour {
     public static NetworkManager Instance;
+    public bool verbose;
 
     private TcpListener server;
     private TcpClient client;
@@ -23,13 +21,11 @@ public class NetworkManager : MonoBehaviour {
     private static readonly ConcurrentQueue<string> incomingMessages = new ConcurrentQueue<string>();
     private readonly List<TcpClient> connectedClients = new List<TcpClient>();
 
-    // PUBLIC STATE
     public int PlayerNumber { get; private set; } = -1;
     public string PlayerIdentifier { get; private set; } = "";
     public int TotalPlayers => playerCount;
     public bool IsServer() => isServer;
 
-    // PRIVATE STATE
     private int playerCount = 1;
     private bool isServer = false;
 
@@ -43,7 +39,7 @@ public class NetworkManager : MonoBehaviour {
         server = new TcpListener(IPAddress.Any, port);
         server.Start();
         server.BeginAcceptTcpClient(OnClientConnected, null);
-        Debug.Log("Server Standby...");
+        Log("Server Standby...");
     }
 
     public void ConnectToServer(string ip, int port) {
@@ -53,27 +49,25 @@ public class NetworkManager : MonoBehaviour {
         receiveThread = new Thread(() => ReceiveLoop(client));
         receiveThread.IsBackground = true;
         receiveThread.Start();
-        Debug.Log("Server Connected...");
+        Log("Server Connected...");
     }
 
     private void OnClientConnected(IAsyncResult ar) {
         TcpClient newClient = server.EndAcceptTcpClient(ar);
         connectedClients.Add(newClient);
         NetworkStream newStream = newClient.GetStream();
-        // SEND PLAYER#
         int assignedPlayerNo = playerCount++;
         string playerId = HashPlayerId(assignedPlayerNo);
-        Debug.Log($"[NetworkManager] New client connected. Assigned: playerno={assignedPlayerNo}, playerid={playerId}");
+        Log($"New client connected. Assigned: playerno={assignedPlayerNo}, playerid={playerId}");
         SendRaw(newStream, $"NTWK {{playerno={assignedPlayerNo}}}");
         SendRaw(newStream, $"NTWK {{playerid={playerId}}}");
         SendMessageServer($"NTWK {{playercnt={playerCount}}}", null);
-        // START RECEIVING
         Thread thread = new Thread(() => ReceiveLoop(newClient));
         thread.IsBackground = true;
         thread.Start();
         server.BeginAcceptTcpClient(OnClientConnected, null);
     }
-    
+
     private string HashPlayerId(int playerNo) {
         string salt = "I hate typescript";
         byte[] inputBytes = Encoding.UTF8.GetBytes($"{playerNo}:{salt}");
@@ -95,9 +89,8 @@ public class NetworkManager : MonoBehaviour {
                 if (length == 0) continue;
                 string raw = Encoding.UTF8.GetString(buffer, 0, length);
                 string[] msgs = raw.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                // MSH HDL
                 foreach (string msg in msgs) {
-                    Debug.Log($"[NetworkManager] Received: {msg}");
+                    Log($"Received: {msg}");
                     if (msg.StartsWith("NTWK")) {
                         var match = Regex.Match(msg, @"NTWK\s*\{\s*(\w+)\s*=\s*(\w+)\s*\}");
                         if (match.Success) {
@@ -105,25 +98,25 @@ public class NetworkManager : MonoBehaviour {
                             string val = match.Groups[2].Value;
                             if (key == "playerno" && int.TryParse(val, out int no)) {
                                 PlayerNumber = no;
-                                Debug.Log($"[NetworkManager] Assigned PlayerNumber = {PlayerNumber}");
+                                Log($"Assigned PlayerNumber = {PlayerNumber}");
                             }
                             else if (key == "playerid") {
                                 PlayerIdentifier = val;
-                                Debug.Log($"[NetworkManager] Assigned PlayerIdentifier = {PlayerIdentifier}");
+                                Log($"Assigned PlayerIdentifier = {PlayerIdentifier}");
                             }
                             else if (key == "playercnt" && int.TryParse(val, out int cnt)) {
                                 playerCount = cnt;
-                                Debug.Log($"[NetworkManager] Updated TotalPlayers = {playerCount}");
+                                Log($"Updated TotalPlayers = {playerCount}");
                             }
                         }
                     }
                     else { incomingMessages.Enqueue(msg); }
                 }
             }
-            catch (Exception e) { Debug.LogError("[NetworkManager] Receive Error: " + e.Message); break; }
+            catch (Exception e) { LogError("Receive Error: " + e.Message); break; }
         }
     }
-    
+
     private void SendRaw(NetworkStream stream, string msg) {
         byte[] buffer = Encoding.UTF8.GetBytes(msg + "\n");
         if (stream != null && stream.CanWrite)
@@ -131,21 +124,21 @@ public class NetworkManager : MonoBehaviour {
     }
 
     public void SendChatMessage(string msg) {
-        if (isServer) { SendMessageServer(msg, null);}
+        if (isServer) { SendMessageServer(msg, null); }
         else { SendMessageClient(msg); }
     }
-    
+
     public void SendMessageServer(string msg, TcpClient except) {
         byte[] buffer = Encoding.UTF8.GetBytes(msg + "\n");
-        Debug.Log($"[SendMessageServer] Client count: {connectedClients.Count}");
+        Log($"[SendMessageServer] Client count: {connectedClients.Count}");
         foreach (var c in connectedClients) {
-            Debug.Log($"client valid: {c != null}, connected: {c?.Connected}");
-            if (c == null || !c.Connected || c == except) { continue; }
+            Log($"client valid: {c != null}, connected: {c?.Connected}");
+            if (c == null || !c.Connected || c == except) continue;
             try {
                 NetworkStream s = c.GetStream();
                 if (s.CanWrite) s.Write(buffer, 0, buffer.Length);
             }
-            catch (Exception e) { Debug.LogWarning("[NetworkManager] Send failed: " + e.Message); }
+            catch (Exception e) { LogWarning("Send failed: " + e.Message); }
         }
     }
 
@@ -156,6 +149,17 @@ public class NetworkManager : MonoBehaviour {
         }
     }
 
-    public bool HasMessage() { return !incomingMessages.IsEmpty; }
-    public string GetNextMessage() { return incomingMessages.TryDequeue(out string msg) ? msg : null; }
+    public bool HasMessage() => !incomingMessages.IsEmpty;
+    public string GetNextMessage() => incomingMessages.TryDequeue(out string msg) ? msg : null;
+
+    // LOGGING HELPERS
+    private void Log(string msg) {
+        if (verbose) Debug.Log("[NetworkManager] " + msg);
+    }
+    private void LogWarning(string msg) {
+        if (verbose) Debug.LogWarning("[NetworkManager] " + msg);
+    }
+    private void LogError(string msg) {
+        if (verbose) Debug.LogError("[NetworkManager] " + msg);
+    }
 }
