@@ -27,6 +27,7 @@ public class NetworkManager : MonoBehaviour {
     public int PlayerNumber { get; private set; } = -1;
     public string PlayerIdentifier { get; private set; } = "";
     public int TotalPlayers => playerCount;
+    public bool IsServer() => isServer;
 
     // PRIVATE STATE
     private int playerCount = 1;
@@ -92,36 +93,39 @@ public class NetworkManager : MonoBehaviour {
                 if (s == null || !s.CanRead) continue;
                 int length = s.Read(buffer, 0, buffer.Length);
                 if (length == 0) continue;
-                string msg = Encoding.UTF8.GetString(buffer, 0, length);
-                Debug.Log($"[NetworkManager] Received: {msg}");
-                // MSG HDL
-                if (msg.StartsWith("NTWK")) {
-                    var match = Regex.Match(msg, @"NTWK\s*\{\s*(\w+)\s*=\s*(\w+)\s*\}");
-                    if (match.Success) {
-                        string key = match.Groups[1].Value;
-                        string val = match.Groups[2].Value;
-                        if (key == "playerno" && int.TryParse(val, out int no)) {
-                            PlayerNumber = no;
-                            Debug.Log($"[NetworkManager] Assigned PlayerNumber = {PlayerNumber}");
-                        }
-                        else if (key == "playerid") {
-                            PlayerIdentifier = val;
-                            Debug.Log($"[NetworkManager] Assigned PlayerIdentifier = {PlayerIdentifier}");
-                        }
-                        else if (key == "playercnt" && int.TryParse(val, out int cnt)) {
-                            playerCount = cnt;
-                            Debug.Log($"[NetworkManager] Updated TotalPlayers = {playerCount}");
+                string raw = Encoding.UTF8.GetString(buffer, 0, length);
+                string[] msgs = raw.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                // MSH HDL
+                foreach (string msg in msgs) {
+                    Debug.Log($"[NetworkManager] Received: {msg}");
+                    if (msg.StartsWith("NTWK")) {
+                        var match = Regex.Match(msg, @"NTWK\s*\{\s*(\w+)\s*=\s*(\w+)\s*\}");
+                        if (match.Success) {
+                            string key = match.Groups[1].Value;
+                            string val = match.Groups[2].Value;
+                            if (key == "playerno" && int.TryParse(val, out int no)) {
+                                PlayerNumber = no;
+                                Debug.Log($"[NetworkManager] Assigned PlayerNumber = {PlayerNumber}");
+                            }
+                            else if (key == "playerid") {
+                                PlayerIdentifier = val;
+                                Debug.Log($"[NetworkManager] Assigned PlayerIdentifier = {PlayerIdentifier}");
+                            }
+                            else if (key == "playercnt" && int.TryParse(val, out int cnt)) {
+                                playerCount = cnt;
+                                Debug.Log($"[NetworkManager] Updated TotalPlayers = {playerCount}");
+                            }
                         }
                     }
-                } 
-                else { incomingMessages.Enqueue(msg); }
+                    else { incomingMessages.Enqueue(msg); }
+                }
             }
             catch (Exception e) { Debug.LogError("[NetworkManager] Receive Error: " + e.Message); break; }
         }
     }
     
     private void SendRaw(NetworkStream stream, string msg) {
-        byte[] buffer = Encoding.UTF8.GetBytes(msg);
+        byte[] buffer = Encoding.UTF8.GetBytes(msg + "\n");
         if (stream != null && stream.CanWrite)
             stream.Write(buffer, 0, buffer.Length);
     }
@@ -132,8 +136,10 @@ public class NetworkManager : MonoBehaviour {
     }
     
     public void SendMessageServer(string msg, TcpClient except) {
-        byte[] buffer = Encoding.UTF8.GetBytes(msg);
+        byte[] buffer = Encoding.UTF8.GetBytes(msg + "\n");
+        Debug.Log($"[SendMessageServer] Client count: {connectedClients.Count}");
         foreach (var c in connectedClients) {
+            Debug.Log($"client valid: {c != null}, connected: {c?.Connected}");
             if (c == null || !c.Connected || c == except) { continue; }
             try {
                 NetworkStream s = c.GetStream();
