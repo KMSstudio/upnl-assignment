@@ -15,7 +15,7 @@ public class ClientParse : MonoBehaviour {
     private int playerCnt;
 
     void Start() {
-        // NETWORK MANAGER
+        // NTWK MANAGER
         if (ReferenceEquals(NetworkManager.Instance, null)) { Debug.LogError("NetworkManager instance is null."); return; }
         playerNo = NetworkManager.Instance.PlayerNumber;
         playerId = NetworkManager.Instance.PlayerIdentifier;
@@ -28,20 +28,20 @@ public class ClientParse : MonoBehaviour {
             if (player == null) { Debug.LogError("Player prefab must contain PlayerBehavior component."); continue; }
             players.Add(player);
         }
-        // USER INPUT CONTROLLER
+        // USER INP CTRL
         if (inputSource is IInputProvider provider) { inputQueue = provider.GetInputQueue(); }
         else { Debug.LogError("inputSource must implement IInputProvider."); }
     }
 
     void Update() {
         if (ReferenceEquals(NetworkManager.Instance, null)) return;
-        // NETWORK INPUT
+        // NTWK INP
         while (NetworkManager.Instance.HasMessage()) {
             string msg = NetworkManager.Instance.GetNextMessage();
             Debug.Log($"[ClientParse] Received: {msg}");
             if (msg.StartsWith("GAME")) { ParseGameMessage(msg); }
         }
-        // USER INPUT
+        // USER INP
         if (inputQueue != null && inputQueue.Count > 0) {
             var input = inputQueue.Dequeue();
             string inputStr = input.ToString();
