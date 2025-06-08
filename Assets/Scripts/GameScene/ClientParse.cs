@@ -9,16 +9,20 @@ public class ClientParse : MonoBehaviour {
 
     private List<PlayerBehavior> players = new List<PlayerBehavior>();
     private Queue<PlayerInput> inputQueue;
+    
+    private int playerNo;
+    private string playerId;
+    private int playerCnt;
 
     void Start() {
         // NETWORK MANAGER
         if (ReferenceEquals(NetworkManager.Instance, null)) { Debug.LogError("NetworkManager instance is null."); return; }
-        int playerCount = NetworkManager.Instance.TotalPlayers;
-        int myPlayerNo = NetworkManager.Instance.PlayerNumber;
-        string myId = NetworkManager.Instance.PlayerIdentifier;
-        Debug.Log($"[ClientParse] Start: PlayerNo={myPlayerNo}, PlayerId={myId}, Count={playerCount}");
+        playerNo = NetworkManager.Instance.PlayerNumber;
+        playerId = NetworkManager.Instance.PlayerIdentifier;
+        playerCnt = NetworkManager.Instance.TotalPlayers;
+        Debug.Log($"[ClientParse] Start: PlayerNo={playerNo}, PlayerId={playerId}, Count={playerCnt}");
         // PLAYER BEHAVIOR
-        for (int i = 0; i < playerCount; i++) {
+        for (int i = 0; i < playerCnt; i++) {
             GameObject instance = Instantiate(playerPrefab);
             PlayerBehavior player = instance.GetComponent<PlayerBehavior>();
             if (player == null) { Debug.LogError("Player prefab must contain PlayerBehavior component."); continue; }
@@ -40,9 +44,8 @@ public class ClientParse : MonoBehaviour {
         // USER INPUT
         if (inputQueue != null && inputQueue.Count > 0) {
             var input = inputQueue.Dequeue();
-            int myNo = NetworkManager.Instance.PlayerNumber;
             string inputStr = input.ToString();
-            string userMsg = $"USER {myNo}{{{inputStr}}}";
+            string userMsg = $"USER {playerNo}{{{inputStr}}}";
             NetworkManager.Instance.SendChatMessage(userMsg);
         }
     }
