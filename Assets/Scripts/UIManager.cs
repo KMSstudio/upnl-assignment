@@ -6,22 +6,22 @@ using UnityEngine.SceneManagement;
 
 public class UIManager : MonoBehaviour
 {
-    public TextMeshProUGUI myIpText;         // 내 IP 표시 텍스트
-    public TMP_InputField ipInputField;      // 상대방 IP 입력 필드
+    public TextMeshProUGUI myIpText;
+    public TMP_InputField ipInputField;
 
     void Start()
     {
-        myIpText.text = "YOUR IP: " + GetMyLocalIP();
+        myIpText.text = ": " + GetMyLocalIP();
     }
 
-    // 버튼: 서버 시작
+    // START SERVER
     public void OnClickStartServer()
     {
         NetworkManager.Instance.StartServer(7777);  // 포트는 7777로 고정
         SceneManager.LoadScene("StandbyScene");
     }
 
-    // 버튼: 서버에 연결
+    // ON SERVER CONN
     public void OnClickConnectToServer()
     {
         string ip = ipInputField.text;
@@ -32,7 +32,7 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    // 로컬 IP 가져오기
+    // GET LOCAL IP
     private string GetMyLocalIP()
     {
         string localIP = "Unknown";
