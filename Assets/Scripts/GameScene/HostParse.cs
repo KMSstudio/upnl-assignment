@@ -11,18 +11,22 @@ public class HostParse : MonoBehaviour {
     private List<PlayerBehavior> players = new List<PlayerBehavior>();
     private Queue<PlayerInput> inputQueue;
     private int playerCount;
+    
+    private int playerRemain;
+    private List<int> rankList = new();
 
     void Start() {
         // NTWK MANAGER
         if (ReferenceEquals(NetworkManager.Instance, null)) { if (verbose) Debug.LogError("NetworkManager is null."); return; }
-        playerCount = NetworkManager.Instance.TotalPlayers;
+        playerRemain = playerCount = NetworkManager.Instance.TotalPlayers;
         if (verbose) Debug.Log($"[HostParse] Initializing with playerCount = {playerCount}");
-        // PLAYER BEHAVIOR
+        // INSTANTIATE PLAYER BEHAVIOR
         for (int i = 0; i < playerCount; i++) {
             Vector3 pos = new Vector3(Random.Range(-10f, 10f), 0.5f, Random.Range(-10f, 10f));
             GameObject instance = Instantiate(playerPrefab, pos, Quaternion.identity);
             PlayerBehavior player = instance.GetComponent<PlayerBehavior>();
             if (player == null) { if (verbose) Debug.LogError("Player prefab must have PlayerBehavior component."); continue; }
+            player.playerNo = i; player.OnDead += PlayerDead;
             players.Add(player);
         }
         // USER INP CTRL
@@ -55,5 +59,28 @@ public class HostParse : MonoBehaviour {
         StringBuilder sb = new StringBuilder("GAME ");
         for (int i = 0; i < players.Count; i++) { sb.Append($"{i}{{{players[i].ToText()}}} "); }
         NetworkManager.Instance.SendChatMessage(sb.ToString().Trim());
+    }
+    
+    public void PlayerDead(int playerNo) {
+        // VALID CHK
+        if (playerNo < 0 || playerNo >= players.Count) return;
+        if (rankList.Contains(playerNo)) return;
+        // KILL PLAYER
+        rankList.Add(playerNo); playerRemain--;
+        if (verbose) Debug.Log($"[HostParse] Player {playerNo} died. Remaining: {playerRemain}");
+        players[playerNo].gameObject.SetActive(false);
+        NetworkManager.Instance.SendChatMessage($"DEAD {playerNo}");
+
+        if (playerRemain == 1) {
+            for (int i = 0; i < players.Count; i++) { if (!rankList.Contains(i)) rankList.Add(i); }
+            PrintFinalRanking();
+        }
+    }
+
+    private void PrintFinalRanking() {
+        Debug.Log("[HostParse] Final Ranking:");
+        for (int i = 0; i < rankList.Count; i++) {
+            Debug.Log($"#{i + 1} - Player {rankList[i]}");
+        }
     }
 }

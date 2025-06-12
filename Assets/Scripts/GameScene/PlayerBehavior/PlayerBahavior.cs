@@ -11,6 +11,11 @@ public class PlayerBehavior : MonoBehaviour {
     public GameObject bulletPrefab;
     [Tooltip("millisecond")]
     public float fireCooldown = 2000f;
+    
+    public event System.Action<int> OnDead;
+    
+    [HideInInspector]
+    public int playerNo = 0;
 
     private float lastFireTime = -9999f;
 
@@ -158,6 +163,11 @@ public class PlayerBehavior : MonoBehaviour {
         Vector3 spawnPos = transform.position + transform.forward * 1.2f;
         Quaternion spawnRot = transform.rotation * Quaternion.Euler(90f, 0f, 0f);;
         Instantiate(bulletPrefab, spawnPos, spawnRot);
+    }
+    
+    public void Dead() {
+        if (OnDead != null) OnDead.Invoke(playerNo);
+        else Debug.LogWarning($"[PlayerBehavior] Player {playerNo} died, but no OnDead listener attached.");
     }
 
     protected void enableAimMotion() { ; }
