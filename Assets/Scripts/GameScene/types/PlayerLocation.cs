@@ -1,5 +1,7 @@
 using UnityEngine;
 
+// Scripts/GameScene/types/PlayerLocation.cs
+
 /// <summary>
 /// Represents parsed player state and position, compatible with PlayerMove structure
 /// </summary>

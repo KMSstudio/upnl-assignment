@@ -1,6 +1,8 @@
 using System.Collections;
 using UnityEngine;
 
+// Scripts/GameScene/PlayerBehavior/PlayerBehavior.cs
+
 /// <summary>
 /// PlayerBehavior.cs
 /// Handles base movement, jump, crouch, and motion state of a player

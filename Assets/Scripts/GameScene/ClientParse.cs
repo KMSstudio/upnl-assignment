@@ -54,6 +54,7 @@ public class ClientParse : MonoBehaviour {
         if (!msg.StartsWith("GAME")) return;
         string payload = msg.Substring(5);
         var matches = Regex.Matches(payload, @"(\d+)\s*\{\s*(.*?)\s*\}");
+        // EXECUTE
         foreach (Match match in matches) {
             int playerNo = int.Parse(match.Groups[1].Value);
             string locationText = match.Groups[2].Value;

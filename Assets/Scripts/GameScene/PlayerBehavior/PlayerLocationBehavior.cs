@@ -7,12 +7,8 @@ using UnityEngine;
 public class PlayerLocationBehavior : PlayerBehavior {
     public MonoBehaviour locationSource;
 
-    private ILocationController controller;
-
     protected override void Start() {
         base.Start();
-        if (locationSource is ILocationController c) controller = c;
-        else Debug.LogError("Location source must implement ILocationController.");
     }
 
     // protected override void FixedUpdate() {
