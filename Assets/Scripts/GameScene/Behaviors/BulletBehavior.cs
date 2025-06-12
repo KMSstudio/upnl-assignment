@@ -1,16 +1,16 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
-public class BulletBehavior : MonoBehaviour {
+public class Bullet : MonoBehaviour {
     [Header("Bullet Settings")]
     public float speed = 10f;
     public float lifetime = 5f;
-    public int damage = 500;
 
     private Rigidbody rb;
 
-    protected virtual void Start() {
+    void Start() {
         rb = GetComponent<Rigidbody>();
+        rb.useGravity = false; // 중력은 아직 적용 안 함
         rb.linearVelocity = transform.up * speed;
         Destroy(gameObject, lifetime);
     }
