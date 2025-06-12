@@ -2,6 +2,11 @@ using System.Collections;
 using UnityEngine;
 
 public class PlayerBehavior : MonoBehaviour {
+    [Header("Player Settings")]
+    [Tooltip("초기 체력")]
+    public int maxHealth = 1000;
+    private int currentHealth;
+    
     [Header("Player Movement")]
     [Tooltip("unit/sec")]
     public float moveSpeed = 5f;
@@ -33,6 +38,7 @@ public class PlayerBehavior : MonoBehaviour {
 
     protected virtual void Start() {
         rb = GetComponent<Rigidbody>();
+        currentHealth = maxHealth;
     }
 
     protected virtual void Update() { }
@@ -153,6 +159,13 @@ public class PlayerBehavior : MonoBehaviour {
         }
     }
     
+    private void OnTriggerEnter(Collider other) {
+        if (other.CompareTag("Bullet")) {
+            Destroy(other.gameObject);
+            TakeDamage(500);
+        }
+    }
+    
     protected bool CanFire() {
         return (Time.time * 1000f) - lastFireTime >= fireCooldown;
     }
@@ -163,6 +176,13 @@ public class PlayerBehavior : MonoBehaviour {
         Vector3 spawnPos = transform.position + transform.forward * 1.2f;
         Quaternion spawnRot = transform.rotation * Quaternion.Euler(90f, 0f, 0f);;
         Instantiate(bulletPrefab, spawnPos, spawnRot);
+    }
+    
+    public void TakeDamage(int damage) {
+        if (currentHealth <= 0) { return; }
+        currentHealth -= damage;
+        Debug.Log($"[PlayerBehavior] Player {playerNo} took {damage} damage. HP = {currentHealth}");
+        if (currentHealth <= 0) Dead();
     }
     
     public void Dead() {
