@@ -9,9 +9,6 @@ EditorBuildSettings:
     path: Assets/Scenes/MainScene.unity
     guid: c3a77a8f96981ec4f850e88878666550
   - enabled: 1
-    path: Assets/Scenes/ChatScene.unity
-    guid: 9d32f5e3b931c5a42a38a9eef896180e
-  - enabled: 1
     path: Assets/Scenes/StandbyScene.unity
     guid: 10d13f5ae6f76144b9e69026b28f28c9
   - enabled: 1

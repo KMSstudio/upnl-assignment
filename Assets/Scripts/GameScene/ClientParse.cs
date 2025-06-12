@@ -60,7 +60,7 @@ public class ClientParse : MonoBehaviour {
             string locationText = match.Groups[2].Value;
             if (playerNo < 0 || playerNo >= players.Count) { Debug.LogWarning($"[ClientParse] Invalid player index: {playerNo}"); continue; }
             Debug.Log($"[ClientParse] Player {playerNo}: {locationText}");
-            try { players[playerNo].ApplyLocation(PlayerLocation.FromText(msg)); }
+            try { players[playerNo].ApplyLocation(PlayerLocation.FromText(locationText)); }
             catch (Exception e) { Debug.LogError($"[ClientParse] Failed to parse location for player {playerNo}: {e.Message}"); }
         }
     }
