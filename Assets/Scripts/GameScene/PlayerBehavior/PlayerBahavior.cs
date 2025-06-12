@@ -2,11 +2,16 @@ using System.Collections;
 using UnityEngine;
 
 public class PlayerBehavior : MonoBehaviour {
+    [Header("Player Movement")]
+    [Tooltip("unit/sec")]
     public float moveSpeed = 5f;
     public float jumpForce = 5f;
-    
+
+    [Header("Fire Settings")]
     public GameObject bulletPrefab;
+    [Tooltip("millisecond")]
     public float fireCooldown = 2000f;
+
     private float lastFireTime = -9999f;
 
     public Vector3 velocity { get; private set; }
