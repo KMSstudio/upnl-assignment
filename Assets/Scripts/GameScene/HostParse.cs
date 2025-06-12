@@ -8,7 +8,7 @@ public class HostParse : MonoBehaviour {
     public MonoBehaviour inputSource;
     public bool verbose;
 
-    private List<PlayerBehavior> players = new List<PlayerBehavior>();
+    private List<HostPlayerBehavior> players = new List<HostPlayerBehavior>();
     private Queue<PlayerInput> inputQueue;
     private int playerCount;
     
@@ -24,8 +24,8 @@ public class HostParse : MonoBehaviour {
         for (int i = 0; i < playerCount; i++) {
             Vector3 pos = new Vector3(Random.Range(-10f, 10f), 0.5f, Random.Range(-10f, 10f));
             GameObject instance = Instantiate(playerPrefab, pos, Quaternion.identity);
-            PlayerBehavior player = instance.GetComponent<PlayerBehavior>();
-            if (player == null) { if (verbose) Debug.LogError("Player prefab must have PlayerBehavior component."); continue; }
+            HostPlayerBehavior player = instance.GetComponent<HostPlayerBehavior>();
+            if (player == null) { if (verbose) Debug.LogError("Player prefab must have HostPlayerBehavior component."); continue; }
             player.playerNo = i; player.OnDead += PlayerDead;
             players.Add(player);
         }

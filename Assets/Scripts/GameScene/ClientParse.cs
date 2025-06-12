@@ -7,7 +7,7 @@ public class ClientParse : MonoBehaviour {
     public GameObject playerPrefab;
     public MonoBehaviour inputSource;
 
-    private List<PlayerBehavior> players = new List<PlayerBehavior>();
+    private List<ClientPlayerBehavior> players = new List<ClientPlayerBehavior>();
     private Queue<PlayerInput> inputQueue;
     
     private int playerNo;
@@ -24,7 +24,7 @@ public class ClientParse : MonoBehaviour {
         // PLAYER BEHAVIOR
         for (int i = 0; i < playerCnt; i++) {
             GameObject instance = Instantiate(playerPrefab);
-            PlayerBehavior player = instance.GetComponent<PlayerBehavior>();
+            ClientPlayerBehavior player = instance.GetComponent<ClientPlayerBehavior>();
             if (player == null) { Debug.LogError("Player prefab must contain PlayerBehavior component."); continue; }
             players.Add(player);
         }
