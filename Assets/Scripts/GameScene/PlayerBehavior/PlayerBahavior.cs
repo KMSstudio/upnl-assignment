@@ -29,7 +29,7 @@ public class PlayerBehavior : MonoBehaviour {
         rb.MovePosition(rb.position + move.velocity * (moveSpeed * Time.fixedDeltaTime));
     }
 
-    public string ToText() { return move.ToLocation().ToString(); }
+    public string ToText() { return move.ToLocation().ToText(); }
 
     public void ApplyInput(PlayerInput input) {
         if (!move.aim && input.aim) enableAimMotion();

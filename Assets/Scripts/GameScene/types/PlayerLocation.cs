@@ -11,6 +11,9 @@ public class PlayerLocation {
     public (bool crouch, bool jump) stance;
     public bool aim;
     public bool fire;
+    
+    public string ToText() => ToString();
+    public static PlayerLocation FromText(string s) => FromString(s);
 
     public static PlayerLocation FromString(string line) {
         var result = new PlayerLocation();
