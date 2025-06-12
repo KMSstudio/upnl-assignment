@@ -57,10 +57,25 @@ public class PlayerBehavior : MonoBehaviour {
     }
 
     public void ApplyLocation(PlayerLocation loc) {
-        transform.position = loc.position;
+        transform.position = loc.loc;
+        transform.rotation = loc.spin;
 
         if (!aiming && loc.aim) enableAimMotion();
         if (aiming && !loc.aim) disableAimMotion();
+
+        if (loc.stance.jump && !stance.crouch && !isJumping) Jump();
+
+        if (!isJumping) {
+            if (!stance.crouch && loc.stance.crouch) {
+                StopCrouchCoroutineIfRunning();
+                stance = (true, stance.jump);
+                crouchCoroutine = StartCoroutine(DoCrouch(true));
+            } else if (stance.crouch && !loc.stance.crouch) {
+                StopCrouchCoroutineIfRunning();
+                stance = (false, stance.jump);
+                crouchCoroutine = StartCoroutine(DoCrouch(false));
+            }
+        }
 
         velocity = Vector3.zero;
         stance = loc.stance;
@@ -68,12 +83,7 @@ public class PlayerBehavior : MonoBehaviour {
     }
 
     public PlayerLocation ToLocation() {
-        return new PlayerLocation {
-            position = transform.position,
-            stance = stance,
-            aim = aiming
-        };
-    }
+        return new PlayerLocation { loc = transform.position, spin = transform.rotation, stance = stance, aim = aiming }; }
 
     public bool ShouldJump(PlayerInput input) => !isJumping && !stance.crouch && input.stance.jump && !stance.jump;
     public bool ShouldCrouch(PlayerInput input) => !isJumping && !stance.crouch && input.stance.crouch;
