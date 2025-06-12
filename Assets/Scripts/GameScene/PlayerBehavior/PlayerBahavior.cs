@@ -1,22 +1,23 @@
 using System.Collections;
 using UnityEngine;
 
-// Scripts/GameScene/PlayerBehavior/PlayerBehavior.cs
-
-/// <summary>
-/// PlayerBehavior.cs
-/// Handles base movement, jump, crouch, and motion state of a player
-/// </summary>
 public class PlayerBehavior : MonoBehaviour {
     public float moveSpeed = 5f;
     public float jumpForce = 5f;
 
-    protected PlayerMove move = new PlayerMove();
-    protected Rigidbody rb;
+    public Vector3 velocity { get; private set; }
+    public int motion { get; private set; }
+    public (bool crouch, bool jump) stance { get; private set; }
+    public bool aiming { get; private set; }
 
-    protected bool isJumping = false;
-    protected bool isCrouch = false;
-    protected Coroutine crouchCoroutine;
+    public bool isJumping { get; private set; } = false;
+    public bool isCrouch { get; private set; } = false;
+
+    private float gravity = -9.8f;
+    private float terminalVelocity = -20f;
+
+    private Rigidbody rb;
+    private Coroutine crouchCoroutine;
 
     protected virtual void Start() {
         rb = GetComponent<Rigidbody>();
@@ -25,76 +26,99 @@ public class PlayerBehavior : MonoBehaviour {
     protected virtual void Update() { }
 
     protected virtual void FixedUpdate() {
-        if (isJumping) move.ApplyGravity(Time.fixedDeltaTime);
-        rb.MovePosition(rb.position + move.velocity * (moveSpeed * Time.fixedDeltaTime));
+        if (isJumping) { ApplyGravity(Time.fixedDeltaTime); }
+        rb.MovePosition(rb.position + velocity * (moveSpeed * Time.fixedDeltaTime));
     }
 
-    public string ToText() { return move.ToLocation().ToText(); }
+    public string ToText() => ToLocation().ToText();
 
     public void ApplyInput(PlayerInput input) {
-        if (!move.aim && input.aim) enableAimMotion();
-        if (move.aim && !input.aim) disableAimMotion();
-        if (!move.fire && input.fire) enableFireMotion();
-        if (move.fire && !input.fire) disableFireMotion();
+        if (!aiming && input.aim) enableAimMotion();
+        if (aiming && !input.aim) disableAimMotion();
+        if (input.fire) OnFire();  // fire는 즉시 처리하고 상태 저장 X
 
-        if (!isCrouch) {
-            if (input.stance.jump && !move.stance.jump && !isJumping && !move.stance.crouch) Jump();
+        if (ShouldJump(input)) { Jump(); }
+
+        if (ShouldCrouch(input)) {
+            StopCrouchCoroutineIfRunning();
+            isCrouch = true;
+            crouchCoroutine = StartCoroutine(DoCrouch(true));
+        } else if (ShouldNotCrouch(input)) {
+            StopCrouchCoroutineIfRunning();
+            isCrouch = false;
+            crouchCoroutine = StartCoroutine(DoCrouch(false));
         }
 
-        if (!isJumping) {
-            if (input.stance.crouch && !move.stance.crouch) {
-                if (crouchCoroutine != null) StopCoroutine(crouchCoroutine);
-                isCrouch = true;
-                crouchCoroutine = StartCoroutine(DoCrouch(true));
-            } else if (!input.stance.crouch && move.stance.crouch) {
-                if (crouchCoroutine != null) StopCoroutine(crouchCoroutine);
-                isCrouch = false;
-                crouchCoroutine = StartCoroutine(DoCrouch(false));
-            }
-        }
-
-        if (move.motion != input.motion) {
+        if (motion != input.motion) {
             if (input.motion == -1) enableLeanLeftMotion();
             else if (input.motion == 1) enableLeanRightMotion();
             else disableLeanMotion();
         }
 
-        move.ApplyInput(input);
+        Vector3 v = velocity;
+        v.x = input.move.y;
+        v.z = input.move.x;
+        velocity = v;
+
+        motion = input.motion;
+        stance = input.stance;
+        aiming = input.aim;
     }
-    
+
     public void ApplyLocation(PlayerLocation loc) {
         transform.position = loc.position;
-        
-        if (!move.aim && loc.aim) enableAimMotion();
-        if (move.aim && !loc.aim) disableAimMotion();
-        if (!move.fire && loc.fire) enableFireMotion();
-        if (move.fire && !loc.fire) disableFireMotion();
 
-        if (!isCrouch) {
-            if (loc.stance.jump && !move.stance.jump && !isJumping && !move.stance.crouch) Jump();
+        if (!aiming && loc.aim) enableAimMotion();
+        if (aiming && !loc.aim) disableAimMotion();
+
+        if (motion != loc.motion) {
+            if (loc.motion == -1) enableLeanLeftMotion();
+            else if (loc.motion == 1) enableLeanRightMotion();
+            else disableLeanMotion();
         }
 
-        if (!isJumping) {
-            if (loc.stance.crouch && !move.stance.crouch) {
-                if (crouchCoroutine != null) StopCoroutine(crouchCoroutine);
-                isCrouch = true;
-                crouchCoroutine = StartCoroutine(DoCrouch(true));
-            } else if (!loc.stance.crouch && move.stance.crouch) {
-                if (crouchCoroutine != null) StopCoroutine(crouchCoroutine);
-                isCrouch = false;
-                crouchCoroutine = StartCoroutine(DoCrouch(false));
-            }
-        }
-        
-        move.ApplyLocation(loc);
+        velocity = Vector3.zero;
+        motion = loc.motion;
+        stance = loc.stance;
+        aiming = loc.aim;
     }
 
-    void Jump() {
+    public PlayerLocation ToLocation() {
+        return new PlayerLocation {
+            position = transform.position,
+            motion = motion,
+            stance = stance,
+            aim = aiming
+        };
+    }
+
+    public bool ShouldJump(PlayerInput input) { return !isJumping && !isCrouch && input.stance.jump && !stance.jump; }
+    public bool ShouldCrouch(PlayerInput input) { return !isJumping && !isCrouch && input.stance.crouch && !stance.crouch; }
+    public bool ShouldNotCrouch(PlayerInput input) { return !isJumping && !isCrouch && !input.stance.crouch && stance.crouch; }
+
+    public void ApplyGravity(float deltaTime) {
+        Vector3 v = velocity;
+        if (v.y > terminalVelocity) {
+            v.y += gravity * deltaTime;
+            velocity = v;
+        }
+    }
+
+    protected void Jump() {
+        Vector3 v = velocity;
+        v.y = jumpForce;
+        velocity = v;
         isJumping = true;
-        move.ForceJump(jumpForce);
     }
 
-    IEnumerator DoCrouch(bool crouch) {
+    protected void StopCrouchCoroutineIfRunning() {
+        if (crouchCoroutine != null) {
+            StopCoroutine(crouchCoroutine);
+            crouchCoroutine = null;
+        }
+    }
+
+    protected IEnumerator DoCrouch(bool crouch) {
         float duration = 0.2f;
         float time = 0f;
         float from = transform.localScale.y;
@@ -113,20 +137,23 @@ public class PlayerBehavior : MonoBehaviour {
         transform.localScale = scale;
     }
 
-    void OnCollisionEnter(Collision collision) {
+    protected void OnCollisionEnter(Collision collision) {
         if (collision.gameObject.layer == LayerMask.NameToLayer("Map")) {
+            Vector3 v = velocity;
+            v.y = 0f;
+            velocity = v;
             isJumping = false;
-            move.ResetYVelocity();
         }
     }
 
-    void enableAimMotion()        { Debug.Log("Enable Aim Motion"); }
-    void disableAimMotion()       { Debug.Log("Disable Aim Motion"); }
+    protected virtual void OnFire() {
+        Debug.Log("OnFire");
+    }
 
-    void enableFireMotion()       { Debug.Log("Enable Fire Motion"); }
-    void disableFireMotion()      { Debug.Log("Disable Fire Motion"); }
+    protected void enableAimMotion()        => Debug.Log("Enable Aim Motion");
+    protected void disableAimMotion()       => Debug.Log("Disable Aim Motion");
 
-    void enableLeanLeftMotion()   { Debug.Log("Enable Lean Left Motion"); }
-    void enableLeanRightMotion()  { Debug.Log("Enable Lean Right Motion"); }
-    void disableLeanMotion()      { Debug.Log("Disable Lean Motion"); }
+    protected void enableLeanLeftMotion()   => Debug.Log("Enable Lean Left Motion");
+    protected void enableLeanRightMotion()  => Debug.Log("Enable Lean Right Motion");
+    protected void disableLeanMotion()      => Debug.Log("Disable Lean Motion");
 }
