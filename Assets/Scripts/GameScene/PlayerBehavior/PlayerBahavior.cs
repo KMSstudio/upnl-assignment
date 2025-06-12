@@ -6,12 +6,10 @@ public class PlayerBehavior : MonoBehaviour {
     public float jumpForce = 5f;
 
     public Vector3 velocity { get; private set; }
-    public int motion { get; private set; }
     public (bool crouch, bool jump) stance { get; private set; }
     public bool aiming { get; private set; }
 
     public bool isJumping { get; private set; } = false;
-    public bool isCrouch { get; private set; } = false;
 
     private float gravity = -9.8f;
     private float terminalVelocity = -20f;
@@ -26,7 +24,7 @@ public class PlayerBehavior : MonoBehaviour {
     protected virtual void Update() { }
 
     protected virtual void FixedUpdate() {
-        if (isJumping) { ApplyGravity(Time.fixedDeltaTime); }
+        if (isJumping) ApplyGravity(Time.fixedDeltaTime);
         rb.MovePosition(rb.position + velocity * (moveSpeed * Time.fixedDeltaTime));
     }
 
@@ -35,24 +33,18 @@ public class PlayerBehavior : MonoBehaviour {
     public void ApplyInput(PlayerInput input) {
         if (!aiming && input.aim) enableAimMotion();
         if (aiming && !input.aim) disableAimMotion();
-        if (input.fire) OnFire();  // fire는 즉시 처리하고 상태 저장 X
+        if (input.fire) OnFire();
 
-        if (ShouldJump(input)) { Jump(); }
+        if (ShouldJump(input)) Jump();
 
         if (ShouldCrouch(input)) {
             StopCrouchCoroutineIfRunning();
-            isCrouch = true;
+            stance = (true, stance.jump);
             crouchCoroutine = StartCoroutine(DoCrouch(true));
         } else if (ShouldNotCrouch(input)) {
             StopCrouchCoroutineIfRunning();
-            isCrouch = false;
+            stance = (false, stance.jump);
             crouchCoroutine = StartCoroutine(DoCrouch(false));
-        }
-
-        if (motion != input.motion) {
-            if (input.motion == -1) enableLeanLeftMotion();
-            else if (input.motion == 1) enableLeanRightMotion();
-            else disableLeanMotion();
         }
 
         Vector3 v = velocity;
@@ -60,7 +52,6 @@ public class PlayerBehavior : MonoBehaviour {
         v.z = input.move.x;
         velocity = v;
 
-        motion = input.motion;
         stance = input.stance;
         aiming = input.aim;
     }
@@ -71,14 +62,7 @@ public class PlayerBehavior : MonoBehaviour {
         if (!aiming && loc.aim) enableAimMotion();
         if (aiming && !loc.aim) disableAimMotion();
 
-        if (motion != loc.motion) {
-            if (loc.motion == -1) enableLeanLeftMotion();
-            else if (loc.motion == 1) enableLeanRightMotion();
-            else disableLeanMotion();
-        }
-
         velocity = Vector3.zero;
-        motion = loc.motion;
         stance = loc.stance;
         aiming = loc.aim;
     }
@@ -86,15 +70,14 @@ public class PlayerBehavior : MonoBehaviour {
     public PlayerLocation ToLocation() {
         return new PlayerLocation {
             position = transform.position,
-            motion = motion,
             stance = stance,
             aim = aiming
         };
     }
 
-    public bool ShouldJump(PlayerInput input) { return !isJumping && !isCrouch && input.stance.jump && !stance.jump; }
-    public bool ShouldCrouch(PlayerInput input) { return !isJumping && !isCrouch && input.stance.crouch && !stance.crouch; }
-    public bool ShouldNotCrouch(PlayerInput input) { return !isJumping && !isCrouch && !input.stance.crouch && stance.crouch; }
+    public bool ShouldJump(PlayerInput input) => !isJumping && !stance.crouch && input.stance.jump && !stance.jump;
+    public bool ShouldCrouch(PlayerInput input) => !isJumping && !stance.crouch && input.stance.crouch;
+    public bool ShouldNotCrouch(PlayerInput input) => !isJumping && stance.crouch && !input.stance.crouch;
 
     public void ApplyGravity(float deltaTime) {
         Vector3 v = velocity;
@@ -150,10 +133,7 @@ public class PlayerBehavior : MonoBehaviour {
         Debug.Log("OnFire");
     }
 
-    protected void enableAimMotion()        => Debug.Log("Enable Aim Motion");
-    protected void disableAimMotion()       => Debug.Log("Disable Aim Motion");
+    protected void enableAimMotion() { ; }
 
-    protected void enableLeanLeftMotion()   => Debug.Log("Enable Lean Left Motion");
-    protected void enableLeanRightMotion()  => Debug.Log("Enable Lean Right Motion");
-    protected void disableLeanMotion()      => Debug.Log("Disable Lean Motion");
+    protected void disableAimMotion() { ; }
 }
