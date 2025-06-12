@@ -40,6 +40,13 @@ public class ClientParse : MonoBehaviour {
             string msg = NetworkManager.Instance.GetNextMessage();
             Debug.Log($"[ClientParse] Received: {msg}");
             if (msg.StartsWith("GAME")) { ParseGameMessage(msg); }
+            else if (msg.StartsWith("DEAD")) {
+                var match = Regex.Match(msg, @"DEAD\s*(\d+)");
+                if (match.Success) {
+                    int deadPlayer = int.Parse(match.Groups[1].Value);
+                    players[deadPlayer].gameObject.SetActive(false);
+                }
+            }
         }
         // USER INP
         if (inputQueue != null && inputQueue.Count > 0) {
