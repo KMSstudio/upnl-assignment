@@ -4,6 +4,10 @@ using UnityEngine;
 public class PlayerBehavior : MonoBehaviour {
     public float moveSpeed = 5f;
     public float jumpForce = 5f;
+    
+    public GameObject bulletPrefab;
+    public float fireCooldown = 2000f;
+    private float lastFireTime = -9999f;
 
     public Vector3 velocity { get; private set; }
     public (bool crouch, bool jump) stance { get; private set; }
@@ -33,7 +37,7 @@ public class PlayerBehavior : MonoBehaviour {
     public void ApplyInput(PlayerInput input) {
         if (!aiming && input.aim) enableAimMotion();
         if (aiming && !input.aim) disableAimMotion();
-        if (input.fire) OnFire();
+        if (input.fire && CanFire()) { Fire(); }
 
         if (ShouldJump(input)) Jump();
 
@@ -138,9 +142,17 @@ public class PlayerBehavior : MonoBehaviour {
             isJumping = false;
         }
     }
+    
+    protected bool CanFire() {
+        return (Time.time * 1000f) - lastFireTime >= fireCooldown;
+    }
 
-    protected virtual void OnFire() {
-        Debug.Log("OnFire");
+    protected void Fire() {
+        if (!bulletPrefab) { return; }
+        lastFireTime = Time.time * 1000f;
+        Vector3 spawnPos = transform.position + transform.forward * 1.2f;
+        Quaternion spawnRot = transform.rotation * Quaternion.Euler(90f, 0f, 0f);;
+        Instantiate(bulletPrefab, spawnPos, spawnRot);
     }
 
     protected void enableAimMotion() { ; }
