@@ -11,13 +11,17 @@ public class BulletBehavior : MonoBehaviour {
 
     protected virtual void Start() {
         rb = GetComponent<Rigidbody>();
+        rb.useGravity = false;
         rb.linearVelocity = transform.up * speed;
+        BulletControl.Instance?.Register(this);
         Destroy(gameObject, lifetime);
     }
 
-    void OnCollisionEnter(Collision collision) {
-        if (collision.gameObject.CompareTag("Map")) {
-            Destroy(gameObject);
-        }
+    protected virtual void OnDestroy() {
+        if (BulletControl.Instance) { BulletControl.Instance.Unregister(this); }
+    }
+
+    protected virtual void OnCollisionEnter(Collision collision) {
+        if (collision.gameObject.CompareTag("Map")) { Destroy(gameObject); }
     }
 }
