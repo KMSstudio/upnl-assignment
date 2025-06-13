@@ -59,6 +59,9 @@ public class HostParse : MonoBehaviour {
         StringBuilder sb = new StringBuilder("GAME ");
         for (int i = 0; i < players.Count; i++) { sb.Append($"{i}{{{players[i].ToText()}}} "); }
         NetworkManager.Instance.SendChatMessage(sb.ToString().Trim());
+        // SEND BULLET LIST
+        if (BulletManager.Instance.HasPendingBullets()) {
+            NetworkManager.Instance.SendChatMessage(BulletManager.Instance.GetPendingBulletsAsStr()); }
     }
     
     public void PlayerDead(int playerNo) {

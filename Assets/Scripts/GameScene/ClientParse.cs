@@ -47,6 +47,7 @@ public class ClientParse : MonoBehaviour {
                     players[deadPlayer].gameObject.SetActive(false);
                 }
             }
+            else if (msg.StartsWith("BULT")) { BulletManager.Instance?.HandleMsg(msg); }
         }
         // USER INP
         if (inputQueue != null && inputQueue.Count > 0) {
