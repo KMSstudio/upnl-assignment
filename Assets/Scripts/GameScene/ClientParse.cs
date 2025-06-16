@@ -3,18 +3,20 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
-public class ClientParse : MonoBehaviour {
+public class ClientParse : MonoBehaviour
+{
     public GameObject playerPrefab;
     public MonoBehaviour inputSource;
 
     private List<ClientPlayerBehavior> players = new List<ClientPlayerBehavior>();
     private Queue<PlayerInput> inputQueue;
-    
+
     private int playerNo;
     private string playerId;
     private int playerCnt;
 
-    void Start() {
+    void Start()
+    {
         // NTWK MANAGER
         if (ReferenceEquals(NetworkManager.Instance, null)) { Debug.LogError("NetworkManager instance is null."); return; }
         playerNo = NetworkManager.Instance.PlayerNumber;
@@ -22,7 +24,8 @@ public class ClientParse : MonoBehaviour {
         playerCnt = NetworkManager.Instance.TotalPlayers;
         Debug.Log($"[ClientParse] Start: PlayerNo={playerNo}, PlayerId={playerId}, Count={playerCnt}");
         // PLAYER BEHAVIOR
-        for (int i = 0; i < playerCnt; i++) {
+        for (int i = 0; i < playerCnt; i++)
+        {
             GameObject instance = Instantiate(playerPrefab);
             ClientPlayerBehavior player = instance.GetComponent<ClientPlayerBehavior>();
             if (player == null) { Debug.LogError("Player prefab must contain PlayerBehavior component."); continue; }
@@ -48,6 +51,7 @@ public class ClientParse : MonoBehaviour {
                 }
             }
             else if (msg.StartsWith("BULT")) { BulletManager.Instance?.HandleMsg(msg); }
+            else if (msg.StartsWith("STAT")) { ParseStatusMessage(msg); }
         }
         // USER INP
         if (inputQueue != null && inputQueue.Count > 0) {
@@ -71,5 +75,18 @@ public class ClientParse : MonoBehaviour {
             try { players[playerNo].ApplyLocation(PlayerLocation.FromText(locationText)); }
             catch (Exception e) { Debug.LogError($"[ClientParse] Failed to parse location for player {playerNo}: {e.Message}"); }
         }
+    }
+    
+    void ParseStatusMessage(string msg) {
+        var match = Regex.Match(msg, @"STAT\s*\{gamefin\s*([\d\s]+)\}");
+        if (!match.Success) { Debug.LogWarning("[ClientParse] Invalid STAT message format."); return; }
+        // PARSE
+        string[] tokens = match.Groups[1].Value.Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        List<int> ranking = new();
+        foreach (string token in tokens) { if (int.TryParse(token, out int num)) ranking.Add(num); }
+        if (ranking.Count == 0) { Debug.LogWarning("[ClientParse] No ranking data in STAT message."); return; }
+        GameResultData.Ranking = ranking;
+        // EXECUTE
+        UnityEngine.SceneManagement.SceneManager.LoadScene("GameResultScene");
     }
 }
