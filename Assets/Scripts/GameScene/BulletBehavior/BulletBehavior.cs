@@ -7,6 +7,7 @@ public class BulletBehavior : MonoBehaviour {
     public float lifetime = 5f;
     public int damage = 500;
 
+    public bool hasHit = false;
     private Rigidbody rb;
 
     protected virtual void Start() {

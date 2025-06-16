@@ -11,6 +11,7 @@ public class PlayerBehavior : MonoBehaviour {
     
     [HideInInspector]
     public int playerNo = 0;
+    public bool isAlive = true;
 
     public Vector3 velocity { get; protected set; }
     public (bool crouch, bool jump) stance { get; protected set; }
@@ -67,11 +68,15 @@ public class PlayerBehavior : MonoBehaviour {
     protected void disableAimMotion() { }
 
     protected virtual void OnCollisionEnter(Collision collision) { }
-    
+
     private void OnTriggerEnter(Collider other) {
         if (other.CompareTag("Bullet")) {
+            var bullet = other.GetComponent<BulletBehavior>();
+            if (bullet == null || bullet.hasHit) return;
+
+            bullet.hasHit = true;
+            TakeDamage(bullet.damage);
             Destroy(other.gameObject);
-            TakeDamage(500);
         }
     }
     
@@ -79,11 +84,12 @@ public class PlayerBehavior : MonoBehaviour {
         if (currentHealth <= 0) { return; }
         currentHealth -= damage;
         Debug.Log($"[PlayerBehavior] Player {playerNo} took {damage} damage. HP = {currentHealth}");
-        if (currentHealth <= 0) Dead();
+        if (currentHealth <= 0) { Dead(); }
     }
     
     public void Dead() {
-        if (OnDead != null) OnDead.Invoke(playerNo);
+        isAlive = false;
+        if (OnDead != null) { OnDead.Invoke(playerNo); }
         else Debug.LogWarning($"[PlayerBehavior] Player {playerNo} died, but no OnDead listener attached.");
     }
 }

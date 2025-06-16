@@ -51,6 +51,8 @@ public class HostPlayerBehavior : PlayerBehavior {
     }
 
     public void ApplyInput(PlayerInput input) {
+        if(!isAlive){ return; }
+        
         if (!aiming && input.aim) enableAimMotion();
         if (aiming && !input.aim) disableAimMotion();
         if (input.fire && CanFire()) Fire();
