@@ -73,17 +73,14 @@ public class HostParse : MonoBehaviour {
         if (verbose) Debug.Log($"[HostParse] Player {playerNo} died. Remaining: {playerRemain}");
         players[playerNo].gameObject.SetActive(false);
         NetworkManager.Instance.SendChatMessage($"DEAD {playerNo}");
-
+        // END OF THE GAME
         if (playerRemain == 1) {
-            for (int i = 0; i < players.Count; i++) { if (!rankList.Contains(i)) rankList.Add(i); }
-            PrintFinalRanking();
-        }
-    }
-
-    private void PrintFinalRanking() {
-        Debug.Log("[HostParse] Final Ranking:");
-        for (int i = 0; i < rankList.Count; i++) {
-            Debug.Log($"#{i + 1} - Player {rankList[i]}");
+            for (int i = 0; i < players.Count; i++) {
+                if (!rankList.Contains(i)) { rankList.Insert(0, i); break; } }
+            string msg = "STAT {gamefin"; foreach (int p in rankList) msg += $" {p}"; msg += "}";
+            NetworkManager.Instance.SendChatMessage(msg);
+            GameResultData.Ranking = new List<int>(rankList);
+            UnityEngine.SceneManagement.SceneManager.LoadScene("GameResultScene");
         }
     }
 }
