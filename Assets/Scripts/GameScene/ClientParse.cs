@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
-public class ClientParse : MonoBehaviour
-{
+public class ClientParse : MonoBehaviour {
     public GameObject playerPrefab;
     public MonoBehaviour inputSource;
 
