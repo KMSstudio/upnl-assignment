@@ -23,11 +23,14 @@ public class NetworkManager : MonoBehaviour {
 
     public int PlayerNumber { get; private set; } = -1;
     public string PlayerIdentifier { get; private set; } = "";
-    public int TotalPlayers => playerCount;
-    public bool IsServer() => isServer;
+    public string PlayerName { get; private set; } = "";
+    private bool doesSendMyName = false;
+    public void SetName(string name) => PlayerName = name;
 
     private int playerCount = 1;
+    public int TotalPlayers => playerCount;
     private bool isServer = false;
+    public bool IsServer() => isServer;
 
     void Awake() {
         if (Instance == null) { Instance = this; DontDestroyOnLoad(gameObject); }
@@ -39,6 +42,7 @@ public class NetworkManager : MonoBehaviour {
         server = new TcpListener(IPAddress.Any, port);
         server.Start();
         server.BeginAcceptTcpClient(OnClientConnected, null);
+        PlayerInfoList.AddPlayer(PlayerNumber, HashPlayerId(PlayerNumber), PlayerName);
         Log("Server Standby...");
     }
 
@@ -58,6 +62,8 @@ public class NetworkManager : MonoBehaviour {
         NetworkStream newStream = newClient.GetStream();
         int assignedPlayerNo = playerCount++;
         string playerId = HashPlayerId(assignedPlayerNo);
+        string playerName = $"Player {assignedPlayerNo}";
+        PlayerInfoList.AddPlayer(assignedPlayerNo, playerId, playerName);
         Log($"New client connected. Assigned: playerno={assignedPlayerNo}, playerid={playerId}");
         SendRaw(newStream, $"NTWK {{playerno={assignedPlayerNo}}}");
         SendRaw(newStream, $"NTWK {{playerid={playerId}}}");
@@ -91,33 +97,51 @@ public class NetworkManager : MonoBehaviour {
                 string[] msgs = raw.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
                 foreach (string msg in msgs) {
                     Log($"Received: {msg}");
-                    if (msg.StartsWith("NTWK")) {
-                        var match = Regex.Match(msg, @"NTWK\s*\{\s*(\w+)\s*=\s*(\w+)\s*\}");
-                        if (match.Success) {
-                            string key = match.Groups[1].Value;
-                            string val = match.Groups[2].Value;
-                            if (key == "playerno" && int.TryParse(val, out int no)) {
-                                PlayerNumber = no;
-                                Log($"Assigned PlayerNumber = {PlayerNumber}");
-                            }
-                            else if (key == "playerid") {
-                                PlayerIdentifier = val;
-                                Log($"Assigned PlayerIdentifier = {PlayerIdentifier}");
-                            }
-                            else if (key == "playercnt" && int.TryParse(val, out int cnt)) {
-                                playerCount = cnt;
-                                Log($"Updated TotalPlayers = {playerCount}");
-                            }
-                        }
-                    }
+                    if (msg.StartsWith("NTWK")) { ParseNetworkMessage(msg); }
                     else { incomingMessages.Enqueue(msg); }
                 }
             }
             catch (Exception e) { LogError("Receive Error: " + e.Message); break; }
         }
     }
+    
+    private void ParseNetworkMessage(string msg) {
+        // HANDLE PLAYER NAME LIST
+            // WE USE TEMPORARY ID FOR GENERAL PLAYERINFOLIST. CLIENT SHOULD NOT KNOW OTHER PLAYERS ID.
+            // THIS LOGIC SHOULD BE IMPROVED
+        var matches = Regex.Matches(msg, @"(\d+)\s*\{\s*playername\s*=\s*(\w+)\s*\}");
+        if (matches.Count > 0) {
+            foreach (Match m in matches) {
+                int pno = int.Parse(m.Groups[1].Value);
+                string pname = m.Groups[2].Value;
+                string pid = $"temp_{pno}";
+                var existing = PlayerInfoList.GetPlayer(pno);
+                if (existing != null) PlayerInfoList.UpdatePlayerName(pno, pname);
+                else PlayerInfoList.AddPlayer(pno, pid, pname);
+            }
+            if (isServer) {
+                var builder = new StringBuilder("NTWK");
+                foreach (var p in PlayerInfoList.GetAllPlayers()) {
+                    builder.Append($" {p.PlayerNo}{{playername={p.PlayerName}}}"); }
+                SendMessageServer(builder.ToString(), null);
+            }
+        }
+        // HANDLE PLAYER NO, PLAYER ID, PLAYER CNT
+        var match = Regex.Match(msg, @"NTWK\s*\{\s*(\w+)\s*=\s*(\w+)\s*\}");
+        if (match.Success) {
+            string key = match.Groups[1].Value;
+            string val = match.Groups[2].Value;
+            if (key == "playerno" && int.TryParse(val, out int no)) { PlayerNumber = no; }
+            else if (key == "playerid") { PlayerIdentifier = val; }
+            else if (key == "playercnt" && int.TryParse(val, out int cnt)) { playerCount = cnt; }
+            ///
+            if (!doesSendMyName && PlayerNumber >= 0 && !string.IsNullOrEmpty(PlayerIdentifier) && !string.IsNullOrEmpty(PlayerName)) {
+                SendMessageClient($"NTWK {PlayerNumber}{{playername={PlayerName}}}"); doesSendMyName = true; }
+        }
+    }
 
-    private void SendRaw(NetworkStream stream, string msg) {
+    private void SendRaw(NetworkStream stream, string msg)
+    {
         byte[] buffer = Encoding.UTF8.GetBytes(msg + "\n");
         if (stream != null && stream.CanWrite)
             stream.Write(buffer, 0, buffer.Length);

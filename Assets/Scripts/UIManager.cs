@@ -8,16 +8,16 @@ public class UIManager : MonoBehaviour
 {
     public TextMeshProUGUI myIpText;
     public TMP_InputField ipInputField;
+    public TMP_InputField nameInputField; 
 
-    void Start()
-    {
+    void Start() {
         myIpText.text = ": " + GetMyLocalIP();
     }
 
     // START SERVER
-    public void OnClickStartServer()
-    {
-        NetworkManager.Instance.StartServer(7777);  // 포트는 7777로 고정
+    public void OnClickStartServer() {
+        NetworkManager.Instance.SetName(nameInputField.text);
+        NetworkManager.Instance.StartServer(7777);
         SceneManager.LoadScene("StandbyScene");
     }
 
@@ -25,8 +25,8 @@ public class UIManager : MonoBehaviour
     public void OnClickConnectToServer()
     {
         string ip = ipInputField.text;
-        if (!string.IsNullOrEmpty(ip))
-        {
+        if (!string.IsNullOrEmpty(ip)) {
+            NetworkManager.Instance.SetName(nameInputField.text);
             NetworkManager.Instance.ConnectToServer(ip, 7777);
             SceneManager.LoadScene("StandbyScene");
         }

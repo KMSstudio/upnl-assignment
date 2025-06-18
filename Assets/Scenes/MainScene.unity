@@ -1356,6 +1356,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   myIpText: {fileID: 1767402220}
   ipInputField: {fileID: 902586253}
+  nameInputField: {fileID: 1498948546}
 --- !u!1 &1174537756
 GameObject:
   m_ObjectHideFlags: 0
@@ -1521,7 +1522,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d083eae9cb93d284aa6ffbe86a7f6438, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  verbose: 0
+  verbose: 1
 --- !u!4 &1274882408
 Transform:
   m_ObjectHideFlags: 0
