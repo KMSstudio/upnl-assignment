@@ -6,6 +6,8 @@ public class BulletBehavior : MonoBehaviour {
     public float speed = 10f;
     public float lifetime = 5f;
     public int damage = 500;
+    [Tooltip("millisecond")]
+    public int reload = 400;
 
     public bool hasHit = false;
     private Rigidbody rb;

@@ -4,8 +4,8 @@ using UnityEngine;
 public class HostPlayerBehavior : PlayerBehavior {
     [Header("Host Fire Settings")]
     public GameObject bulletPrefab;
-    [Tooltip("millisecond")]
-    public float fireCooldown = 400f;
+
+    private int relaodTime = 400;
     
     [Header("Player Movement")]
     [Tooltip("unit/sec")]
@@ -13,14 +13,14 @@ public class HostPlayerBehavior : PlayerBehavior {
     public float jumpForce = 4f;
     
     public float rotationSpeed = 240f;
-    public float maxForwardSpeed = 4f;
-    public float maxBackwardSpeed = 2f;
-    public float maxRightSpeed = 2.5f;
-    public float maxLeftSpeed = 2.5f;
-    public float acceleration = 50f;
+    public float maxFwdSpeed = 4f;
+    public float maxBwdSpeed = 2f;
+    public float maxRhtSpeed = 2.5f;
+    public float maxLftSpeed = 2.5f;
+    public float acc = 50f;
 
     private bool isJumping = false;
-    private float currentSpeed = 0f;
+    private float speed = 0f;
 
     private float lastFireTimeHost = -9999f;
     
@@ -30,6 +30,12 @@ public class HostPlayerBehavior : PlayerBehavior {
             v.y += gravity * deltaTime;
             velocity = v;
         }
+    }
+
+    protected override void Start() {
+        base.Start();
+        BulletBehavior bullet = bulletPrefab.GetComponent<BulletBehavior>();
+        relaodTime = bullet?.reload ?? 400;
     }
 
     protected override void FixedUpdate() {
@@ -90,14 +96,14 @@ public class HostPlayerBehavior : PlayerBehavior {
         Vector2 inputDir = new Vector2(strafeInp, forwardInp);
         Vector2 normalizedDir = inputDir.normalized;
         
-        float fwdSpeed = (forwardInp >= 0f) ? maxForwardSpeed : maxBackwardSpeed;
-        float strafeSpeed = (strafeInp >= 0f) ? maxRightSpeed : maxLeftSpeed;
+        float fwdSpeed = (forwardInp >= 0f) ? maxFwdSpeed : maxBwdSpeed;
+        float strafeSpeed = (strafeInp >= 0f) ? maxRhtSpeed : maxLftSpeed;
         Vector3 targetVelocity =
             transform.forward * normalizedDir.y * fwdSpeed +
             transform.right * normalizedDir.x * strafeSpeed;
         
         Vector3 velocityDiff = targetVelocity - new Vector3(velocity.x, 0f, velocity.z);
-        Vector3 deltaVel = Vector3.ClampMagnitude(velocityDiff, acceleration * Time.deltaTime);
+        Vector3 deltaVel = Vector3.ClampMagnitude(velocityDiff, acc * Time.deltaTime);
         if(velocity.y <= 0.1f) velocity += new Vector3(deltaVel.x, 0f, deltaVel.z);
         // STATE UPDATE
         stance = input.stance;
@@ -108,7 +114,7 @@ public class HostPlayerBehavior : PlayerBehavior {
     }
 
     private bool CanFire() {
-        return (Time.time * 1000f) - lastFireTimeHost >= fireCooldown;
+        return (Time.time * 1000f) - lastFireTimeHost >= relaodTime;
     }
 
     private void Fire() {
