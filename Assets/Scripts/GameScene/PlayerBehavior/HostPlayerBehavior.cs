@@ -5,7 +5,7 @@ public class HostPlayerBehavior : PlayerBehavior {
     [Header("Host Fire Settings")]
     public GameObject bulletPrefab;
     [Tooltip("millisecond")]
-    public float fireCooldown = 2000f;
+    public float fireCooldown = 400f;
     
     [Header("Player Movement")]
     [Tooltip("unit/sec")]

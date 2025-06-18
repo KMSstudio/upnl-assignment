@@ -17,8 +17,8 @@ public class HostParse : MonoBehaviour {
 
     void Start() {
         // NTWK MANAGER
-        if (ReferenceEquals(NetworkManager.Instance, null)) { if (verbose) Debug.LogError("NetworkManager is null."); return; }
-        playerRemain = playerCount = NetworkManager.Instance.TotalPlayers;
+        if (ReferenceEquals(NetworkManager.Instance, null)) { if (verbose) Debug.LogError("NetworkManager is null."); }
+        playerRemain = playerCount = NetworkManager.Instance?.TotalPlayers ?? 2;
         if (verbose) Debug.Log($"[HostParse] Initializing with playerCount = {playerCount}");
         // INSTANTIATE PLAYER BEHAVIOR
         for (int i = 0; i < playerCount; i++) {
@@ -40,7 +40,7 @@ public class HostParse : MonoBehaviour {
             while (inputQueue.Count > 0) { players[0].ApplyInput(inputQueue.Dequeue()); }
         }
         // PARSE NTWK MSG
-        while (NetworkManager.Instance.HasMessage()) {
+        while (NetworkManager.Instance?.HasMessage() ?? false) {
             string msg = NetworkManager.Instance.GetNextMessage();
             if (msg.StartsWith("USER")) {
                 var match = Regex.Match(msg, @"USER\s+(\d+)\s*\{\s*(.*?)\s*\}");
@@ -58,10 +58,10 @@ public class HostParse : MonoBehaviour {
         // SEND PLAYER LOC
         StringBuilder sb = new StringBuilder("GAME ");
         for (int i = 0; i < players.Count; i++) { sb.Append($"{i}{{{players[i].ToText()}}} "); }
-        NetworkManager.Instance.SendChatMessage(sb.ToString().Trim());
+        NetworkManager.Instance?.SendChatMessage(sb.ToString().Trim());
         // SEND BULLET LIST
-        if (BulletManager.Instance.HasPendingBullets()) {
-            NetworkManager.Instance.SendChatMessage(BulletManager.Instance.GetPendingBulletsAsStr()); }
+        if (BulletManager.Instance?.HasPendingBullets() ?? false) {
+            NetworkManager.Instance?.SendChatMessage(BulletManager.Instance.GetPendingBulletsAsStr()); }
     }
     
     public void PlayerDead(int playerNo) {
@@ -72,13 +72,13 @@ public class HostParse : MonoBehaviour {
         rankList.Add(playerNo); playerRemain--;
         if (verbose) Debug.Log($"[HostParse] Player {playerNo} died. Remaining: {playerRemain}");
         players[playerNo].gameObject.SetActive(false);
-        NetworkManager.Instance.SendChatMessage($"DEAD {playerNo}");
+        NetworkManager.Instance?.SendChatMessage($"DEAD {playerNo}");
         // END OF THE GAME
         if (playerRemain == 1) {
             for (int i = 0; i < players.Count; i++) {
                 if (!rankList.Contains(i)) { rankList.Insert(0, i); break; } }
             string msg = "STAT {gamefin"; foreach (int p in rankList) msg += $" {p}"; msg += "}";
-            NetworkManager.Instance.SendChatMessage(msg);
+            NetworkManager.Instance?.SendChatMessage(msg);
             GameResultData.Ranking = new List<int>(rankList);
             UnityEngine.SceneManagement.SceneManager.LoadScene("GameResultScene");
         }

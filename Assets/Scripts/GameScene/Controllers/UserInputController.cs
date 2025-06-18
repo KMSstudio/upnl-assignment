@@ -24,7 +24,7 @@ public class UserInputController : MonoBehaviour, IInputProvider
         bool crouch = Input.GetKey(KeyCode.LeftShift);
         bool jump = Input.GetKey(KeyCode.Space);
         bool aim = Input.GetMouseButton(1);
-        bool fire = Input.GetMouseButton(0);
+        bool fire = Input.GetMouseButton(0) || Input.GetKey(KeyCode.Return);
 
         if (Input.GetKey(KeyCode.W)) move.x += 1;
         if (Input.GetKey(KeyCode.S)) move.x -= 1;

@@ -208,10 +208,12 @@ MonoBehaviour:
   isAlive: 1
   aiming: 0
   bulletPrefab: {fileID: 3369696739643580149, guid: 64c400fe479d5a3448ad8b00cfa47e80, type: 3}
-  fireCooldown: 2000
+  fireCooldown: 400
   moveSpeed: 2
   jumpForce: 4
   rotationSpeed: 240
   maxForwardSpeed: 4
-  maxBackwardSpeed: 3
-  acceleration: 30
+  maxBackwardSpeed: 2
+  maxRightSpeed: 2.5
+  maxLeftSpeed: 2.5
+  acceleration: 50
