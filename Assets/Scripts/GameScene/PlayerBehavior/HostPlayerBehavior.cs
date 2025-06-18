@@ -38,10 +38,15 @@ public class HostPlayerBehavior : PlayerBehavior {
         relaodTime = bullet?.reload ?? 400;
     }
 
-    protected override void FixedUpdate() {
+    protected override void FixedUpdate()
+    {
         base.FixedUpdate();
+        // MOVING AS GIVEN VELOCITY
         if (isJumping) ApplyGravity(Time.fixedDeltaTime);
         rb.MovePosition(rb.position + velocity * (moveSpeed * Time.fixedDeltaTime));
+        // RESET X&Z AXIS ROATION
+        Vector3 euler = transform.rotation.eulerAngles;
+        if (Mathf.Abs(euler.x) > 0.01f || Mathf.Abs(euler.z) > 0.01f) { transform.rotation = Quaternion.Euler(0f, euler.y, 0f); }
     }
     
     protected void OnCollisionEnter(Collision collision) {
@@ -108,9 +113,6 @@ public class HostPlayerBehavior : PlayerBehavior {
         // STATE UPDATE
         stance = input.stance;
         aiming = input.aim;
-        // RESET X&Z AXIS ROATION
-        Vector3 euler = transform.rotation.eulerAngles;
-        if (Mathf.Abs(euler.x) > 0.01f || Mathf.Abs(euler.z) > 0.01f) { transform.rotation = Quaternion.Euler(0f, euler.y, 0f); }
     }
 
     private bool CanFire() {

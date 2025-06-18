@@ -122,7 +122,7 @@ GameObject:
   - component: {fileID: 3229508292240437911}
   m_Layer: 7
   m_Name: ClientPlayer
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -205,4 +205,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHealth: 1000
   playerNo: 0
+  isAlive: 1
   aiming: 0

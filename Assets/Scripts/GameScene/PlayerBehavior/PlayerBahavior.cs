@@ -67,18 +67,7 @@ public class PlayerBehavior : MonoBehaviour {
     protected void enableAimMotion() { }
     protected void disableAimMotion() { }
 
-    protected virtual void OnCollisionEnter(Collision collision) { }
-
-    private void OnTriggerEnter(Collider other) {
-        if (other.CompareTag("Bullet")) {
-            var bullet = other.GetComponent<BulletBehavior>();
-            if (bullet == null || bullet.hasHit) return;
-
-            bullet.hasHit = true;
-            TakeDamage(bullet.damage);
-            Destroy(other.gameObject);
-        }
-    }
+    // protected virtual void OnCollisionEnter(Collision collision) { }
     
     public void TakeDamage(int damage) {
         if (currentHealth <= 0) { return; }

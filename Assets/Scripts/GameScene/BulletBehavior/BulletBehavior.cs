@@ -69,7 +69,13 @@ public class BulletBehavior : MonoBehaviour {
         if (BulletManager.Instance) { BulletManager.Instance.Unregister(this); }
     }
 
-    protected virtual void OnCollisionEnter(Collision collision) {
+    protected virtual void OnCollisionEnter(Collision collision)
+    {
         if (collision.gameObject.CompareTag("Map")) { Destroy(gameObject); }
+        else if (collision.gameObject.CompareTag("Player")) {
+            var playerBhv = collision.gameObject.GetComponent<PlayerBehavior>();
+            if ((playerBhv?.isAlive ?? false) && !hasHit) { playerBhv.TakeDamage(damage); hasHit = true; }
+            Destroy(gameObject);
+        }
     }
 }
