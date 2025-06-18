@@ -20,7 +20,7 @@ public class UserInputController : MonoBehaviour, IInputProvider
         lastInputTime = Time.time;
 
         Vector2 move = Vector2.zero;
-        int motion = 0;
+        int rot = 0;
         bool crouch = Input.GetKey(KeyCode.LeftShift);
         bool jump = Input.GetKey(KeyCode.Space);
         bool aim = Input.GetMouseButton(1);
@@ -31,10 +31,10 @@ public class UserInputController : MonoBehaviour, IInputProvider
         if (Input.GetKey(KeyCode.D)) move.y += 1;
         if (Input.GetKey(KeyCode.A)) move.y -= 1;
 
-        if (Input.GetKey(KeyCode.Q)) motion += -1;
-        else if (Input.GetKey(KeyCode.E)) motion += +1;
+        if (Input.GetKey(KeyCode.Q)) rot = -1;
+        else if (Input.GetKey(KeyCode.E)) rot = +1;
 
-        var input = new PlayerInput(move, motion, (crouch, jump), aim, fire);
+        var input = new PlayerInput(move, rot, (crouch, jump), aim, fire);
         inputQueue.Enqueue(input);
     }
 }

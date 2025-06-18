@@ -14,8 +14,10 @@ public class HostPlayerBehavior : PlayerBehavior {
     
     public float rotationSpeed = 240f;
     public float maxForwardSpeed = 4f;
-    public float maxBackwardSpeed = 3f;
-    public float acceleration = 30f;
+    public float maxBackwardSpeed = 2f;
+    public float maxRightSpeed = 2.5f;
+    public float maxLeftSpeed = 2.5f;
+    public float acceleration = 50f;
 
     private bool isJumping = false;
     private float currentSpeed = 0f;
@@ -58,7 +60,7 @@ public class HostPlayerBehavior : PlayerBehavior {
 
     public void ApplyInput(PlayerInput input) {
         if (!isAlive) return;
-        // Motion
+        // MOTION
         if (!aiming && input.aim) enableAimMotion();
         if (aiming && !input.aim) disableAimMotion();
         if (input.fire && CanFire()) Fire();
@@ -73,25 +75,37 @@ public class HostPlayerBehavior : PlayerBehavior {
             stance = (false, stance.jump);
             crouchCoroutine = StartCoroutine(DoCrouch(false));
         }
-        // ROTATION. A = -1 D = +1
-        float turnInput = input.move.y;
+        // ROTATION. Q = -1, E = +1
+        float turnInput = input.rotation;
         if (Mathf.Abs(turnInput) > 0.1f) {
             float yRotation = turnInput * rotationSpeed * Time.deltaTime;
             transform.Rotate(0f, yRotation, 0f);
         }
-        // ACCELERATION S = -1 W = 1
-        float moveInput = input.move.x; // y: 전/후
-        float targetSpeed = 0f;
-        if (moveInput > 0f) targetSpeed = maxForwardSpeed;
-        else if (moveInput < 0f) targetSpeed = -maxBackwardSpeed;
-        currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, acceleration * Time.deltaTime);
-        Vector3 forwardVelocity = transform.forward * currentSpeed;
-        velocity = new Vector3(forwardVelocity.x, velocity.y, forwardVelocity.z);
+        // ACCELERATION.
+            // NORMALIZED TARGET VERTOR
+            // REAL TARGET VECTOR
+            // VELOCITY VECTOR
+        float forwardInp = input.move.x;
+        float strafeInp = input.move.y;
+        Vector2 inputDir = new Vector2(strafeInp, forwardInp);
+        Vector2 normalizedDir = inputDir.normalized;
+        
+        float fwdSpeed = (forwardInp >= 0f) ? maxForwardSpeed : maxBackwardSpeed;
+        float strafeSpeed = (strafeInp >= 0f) ? maxRightSpeed : maxLeftSpeed;
+        Vector3 targetVelocity =
+            transform.forward * normalizedDir.y * fwdSpeed +
+            transform.right * normalizedDir.x * strafeSpeed;
+        
+        Vector3 velocityDiff = targetVelocity - new Vector3(velocity.x, 0f, velocity.z);
+        Vector3 deltaVel = Vector3.ClampMagnitude(velocityDiff, acceleration * Time.deltaTime);
+        if(velocity.y <= 0.1f) velocity += new Vector3(deltaVel.x, 0f, deltaVel.z);
         // STATE UPDATE
         stance = input.stance;
         aiming = input.aim;
+        // RESET X&Z AXIS ROATION
+        Vector3 euler = transform.rotation.eulerAngles;
+        if (Mathf.Abs(euler.x) > 0.01f || Mathf.Abs(euler.z) > 0.01f) { transform.rotation = Quaternion.Euler(0f, euler.y, 0f); }
     }
-
 
     private bool CanFire() {
         return (Time.time * 1000f) - lastFireTimeHost >= fireCooldown;
