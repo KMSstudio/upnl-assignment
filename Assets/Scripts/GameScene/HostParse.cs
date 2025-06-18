@@ -15,6 +15,10 @@ public class HostParse : MonoBehaviour {
     private int playerRemain;
     private List<int> rankList = new();
 
+    public static HostParse Instance { get; private set; }
+    void Awake() {
+        if (Instance != null && Instance != this) { Destroy(this.gameObject); return; } Instance = this; }
+    
     void Start() {
         // NTWK MANAGER
         if (ReferenceEquals(NetworkManager.Instance, null)) { if (verbose) Debug.LogError("NetworkManager is null."); }
@@ -64,7 +68,15 @@ public class HostParse : MonoBehaviour {
             NetworkManager.Instance?.SendChatMessage(BulletManager.Instance.GetPendingBulletsAsStr()); }
     }
     
-    public void PlayerDead(int playerNo) {
+    public GameObject GetLocalPlayer() {
+        int localPlayerNo = NetworkManager.Instance?.PlayerNumber ?? 0;
+        if (localPlayerNo >= 0 && localPlayerNo < players.Count)
+            return players[localPlayerNo].gameObject;
+        return null;
+    }
+    
+    public void PlayerDead(int playerNo)
+    {
         // VALID CHK
         if (playerNo < 0 || playerNo >= players.Count) return;
         if (rankList.Contains(playerNo)) return;
@@ -74,9 +86,12 @@ public class HostParse : MonoBehaviour {
         players[playerNo].gameObject.SetActive(false);
         NetworkManager.Instance?.SendChatMessage($"DEAD {playerNo}");
         // END OF THE GAME
-        if (playerRemain == 1) {
-            for (int i = 0; i < players.Count; i++) {
-                if (!rankList.Contains(i)) { rankList.Insert(0, i); break; } }
+        if (playerRemain == 1)
+        {
+            for (int i = 0; i < players.Count; i++)
+            {
+                if (!rankList.Contains(i)) { rankList.Insert(0, i); break; }
+            }
             string msg = "STAT {gamefin"; foreach (int p in rankList) msg += $" {p}"; msg += "}";
             NetworkManager.Instance?.SendChatMessage(msg);
             GameResultData.Ranking = new List<int>(rankList);

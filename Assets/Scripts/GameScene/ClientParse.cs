@@ -13,6 +13,11 @@ public class ClientParse : MonoBehaviour {
     private int playerNo;
     private string playerId;
     private int playerCnt;
+    
+    
+    public static ClientParse Instance { get; private set; }
+    void Awake() {
+        if (Instance != null && Instance != this) { Destroy(this.gameObject); return; } Instance = this; }
 
     void Start() {
         // NTWK MANAGER
@@ -57,6 +62,13 @@ public class ClientParse : MonoBehaviour {
             string userMsg = $"USER {playerNo}{{{inputStr}}}";
             NetworkManager.Instance.SendChatMessage(userMsg);
         }
+    }
+    
+    public GameObject GetLocalPlayer() {
+        int localPlayerNo = NetworkManager.Instance?.PlayerNumber ?? 0;
+        if (localPlayerNo >= 0 && localPlayerNo < players.Count)
+            return players[localPlayerNo].gameObject;
+        return null;
     }
 
     void ParseGameMessage(string msg) {
