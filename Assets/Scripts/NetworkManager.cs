@@ -42,6 +42,7 @@ public class NetworkManager : MonoBehaviour {
         server = new TcpListener(IPAddress.Any, port);
         server.Start();
         server.BeginAcceptTcpClient(OnClientConnected, null);
+        if (!string.IsNullOrEmpty(PlayerName)) { PlayerName = $"Player {PlayerNumber}"; }
         PlayerInfoList.AddPlayer(PlayerNumber, HashPlayerId(PlayerNumber), PlayerName);
         Log("Server Standby...");
     }
@@ -135,7 +136,8 @@ public class NetworkManager : MonoBehaviour {
             else if (key == "playerid") { PlayerIdentifier = val; }
             else if (key == "playercnt" && int.TryParse(val, out int cnt)) { playerCount = cnt; }
             ///
-            if (!doesSendMyName && PlayerNumber >= 0 && !string.IsNullOrEmpty(PlayerIdentifier) && !string.IsNullOrEmpty(PlayerName)) {
+            if (!doesSendMyName && PlayerNumber >= 0 && !string.IsNullOrEmpty(PlayerIdentifier)) {
+                if (!string.IsNullOrEmpty(PlayerName)) { PlayerName = $"Player {PlayerNumber}"; }
                 SendMessageClient($"NTWK {PlayerNumber}{{playername={PlayerName}}}"); doesSendMyName = true; }
         }
     }
