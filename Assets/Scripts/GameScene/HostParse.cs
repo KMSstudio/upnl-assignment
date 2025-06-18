@@ -69,7 +69,7 @@ public class HostParse : MonoBehaviour {
         if (playerNo < 0 || playerNo >= players.Count) return;
         if (rankList.Contains(playerNo)) return;
         // KILL PLAYER
-        rankList.Add(playerNo); playerRemain--;
+        rankList.Insert(0, playerNo); playerRemain--;
         if (verbose) Debug.Log($"[HostParse] Player {playerNo} died. Remaining: {playerRemain}");
         players[playerNo].gameObject.SetActive(false);
         NetworkManager.Instance?.SendChatMessage($"DEAD {playerNo}");

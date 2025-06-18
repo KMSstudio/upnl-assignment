@@ -42,7 +42,7 @@ public class NetworkManager : MonoBehaviour {
         server = new TcpListener(IPAddress.Any, port);
         server.Start();
         server.BeginAcceptTcpClient(OnClientConnected, null);
-        if (!string.IsNullOrEmpty(PlayerName)) { PlayerName = $"Player {PlayerNumber}"; }
+        if (string.IsNullOrEmpty(PlayerName)) { PlayerName = $"Player {PlayerNumber}"; }
         PlayerInfoList.AddPlayer(PlayerNumber, HashPlayerId(PlayerNumber), PlayerName);
         Log("Server Standby...");
     }
@@ -110,8 +110,9 @@ public class NetworkManager : MonoBehaviour {
         // HANDLE PLAYER NAME LIST
             // WE USE TEMPORARY ID FOR GENERAL PLAYERINFOLIST. CLIENT SHOULD NOT KNOW OTHER PLAYERS ID.
             // THIS LOGIC SHOULD BE IMPROVED
-        var matches = Regex.Matches(msg, @"(\d+)\s*\{\s*playername\s*=\s*(\w+)\s*\}");
+        var matches = Regex.Matches(msg, @"(\d+)\s*\{\s*playername\s*=\s*([^\}]+)\s*\}");
         if (matches.Count > 0) {
+            Debug.Log("MATCHMATCHMATCHMATCH");
             foreach (Match m in matches) {
                 int pno = int.Parse(m.Groups[1].Value);
                 string pname = m.Groups[2].Value;
@@ -121,6 +122,7 @@ public class NetworkManager : MonoBehaviour {
                 else PlayerInfoList.AddPlayer(pno, pid, pname);
             }
             if (isServer) {
+                Debug.Log("CALLCALLCALLCALLCALL");
                 var builder = new StringBuilder("NTWK");
                 foreach (var p in PlayerInfoList.GetAllPlayers()) {
                     builder.Append($" {p.PlayerNo}{{playername={p.PlayerName}}}"); }
@@ -137,7 +139,7 @@ public class NetworkManager : MonoBehaviour {
             else if (key == "playercnt" && int.TryParse(val, out int cnt)) { playerCount = cnt; }
             ///
             if (!doesSendMyName && PlayerNumber >= 0 && !string.IsNullOrEmpty(PlayerIdentifier)) {
-                if (!string.IsNullOrEmpty(PlayerName)) { PlayerName = $"Player {PlayerNumber}"; }
+                if (string.IsNullOrEmpty(PlayerName)) { PlayerName = $"Player {PlayerNumber}"; }
                 SendMessageClient($"NTWK {PlayerNumber}{{playername={PlayerName}}}"); doesSendMyName = true; }
         }
     }
