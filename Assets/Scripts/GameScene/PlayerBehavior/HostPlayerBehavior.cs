@@ -9,10 +9,16 @@ public class HostPlayerBehavior : PlayerBehavior {
     
     [Header("Player Movement")]
     [Tooltip("unit/sec")]
-    public float moveSpeed = 5f;
-    public float jumpForce = 5f;
+    public float moveSpeed = 2f;
+    public float jumpForce = 4f;
+    
+    public float rotationSpeed = 240f;
+    public float maxForwardSpeed = 4f;
+    public float maxBackwardSpeed = 3f;
+    public float acceleration = 30f;
 
     private bool isJumping = false;
+    private float currentSpeed = 0f;
 
     private float lastFireTimeHost = -9999f;
     
@@ -51,14 +57,13 @@ public class HostPlayerBehavior : PlayerBehavior {
     }
 
     public void ApplyInput(PlayerInput input) {
-        if(!isAlive){ return; }
-        
+        if (!isAlive) return;
+        // Motion
         if (!aiming && input.aim) enableAimMotion();
         if (aiming && !input.aim) disableAimMotion();
         if (input.fire && CanFire()) Fire();
-
         if (ShouldJump(input)) { Jump(); DoJumpMotion(); }
-
+        // CROUCH MOTION
         if (ShouldCrouch(input)) {
             StopCrouchCoroutineIfRunning();
             stance = (true, stance.jump);
@@ -68,15 +73,25 @@ public class HostPlayerBehavior : PlayerBehavior {
             stance = (false, stance.jump);
             crouchCoroutine = StartCoroutine(DoCrouch(false));
         }
-
-        Vector3 v = velocity;
-        v.x = input.move.y;
-        v.z = input.move.x;
-        velocity = v;
-
+        // ROTATION. A = -1 D = +1
+        float turnInput = input.move.y;
+        if (Mathf.Abs(turnInput) > 0.1f) {
+            float yRotation = turnInput * rotationSpeed * Time.deltaTime;
+            transform.Rotate(0f, yRotation, 0f);
+        }
+        // ACCELERATION S = -1 W = 1
+        float moveInput = input.move.x; // y: 전/후
+        float targetSpeed = 0f;
+        if (moveInput > 0f) targetSpeed = maxForwardSpeed;
+        else if (moveInput < 0f) targetSpeed = -maxBackwardSpeed;
+        currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, acceleration * Time.deltaTime);
+        Vector3 forwardVelocity = transform.forward * currentSpeed;
+        velocity = new Vector3(forwardVelocity.x, velocity.y, forwardVelocity.z);
+        // STATE UPDATE
         stance = input.stance;
         aiming = input.aim;
     }
+
 
     private bool CanFire() {
         return (Time.time * 1000f) - lastFireTimeHost >= fireCooldown;
